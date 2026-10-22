@@ -1,0 +1,29 @@
+{
+ "doctype": "Workspace",
+ "name": "C4Style",
+ "label": "C4Style",
+ "title": "C4Style",
+ "module": "C4Style",
+ "public": 1,
+ "is_hidden": 0,
+ "icon": "settings",
+ "sequence_id": 30,
+ "content": "[{\"id\": \"c4style-header\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">C4Style</span>\", \"col\": 12}}, {\"id\": \"c4style-settings\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Style Settings\", \"col\": 4}}]",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Website Manager"
+  }
+ ],
+ "shortcuts": [
+  {
+   "label": "Style Settings",
+   "type": "DocType",
+   "link_to": "Style Settings",
+   "color": "Grey"
+  }
+ ],
+ "links": []
+}

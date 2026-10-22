@@ -1,0 +1,124 @@
+{
+ "doctype": "DocType",
+ "name": "Style Settings",
+ "module": "C4Style",
+ "issingle": 1,
+ "track_changes": 1,
+ "field_order": [
+  "colors_section",
+  "palette",
+  "primary",
+  "accent",
+  "background",
+  "menu_section",
+  "menu_background",
+  "menu_text",
+  "menu_active",
+  "layout_section",
+  "font_size",
+  "radius",
+  "density"
+ ],
+ "fields": [
+  {
+   "fieldname": "colors_section",
+   "fieldtype": "Section Break",
+   "label": "Site colors"
+  },
+  {
+   "fieldname": "palette",
+   "fieldtype": "Select",
+   "label": "Color palette",
+   "options": "C4Style\nOcean\nForest\nSunset\nCustom",
+   "default": "C4Style"
+  },
+  {
+   "fieldname": "primary",
+   "fieldtype": "Color",
+   "label": "Primary color",
+   "default": "#714B67",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accent",
+   "fieldtype": "Color",
+   "label": "Accent color",
+   "default": "#017E84",
+   "reqd": 1
+  },
+  {
+   "fieldname": "background",
+   "fieldtype": "Color",
+   "label": "Page background",
+   "default": "#E5E8EB",
+   "reqd": 1
+  },
+  {
+   "fieldname": "menu_section",
+   "fieldtype": "Section Break",
+   "label": "Menu colors"
+  },
+  {
+   "fieldname": "menu_background",
+   "fieldtype": "Color",
+   "label": "Menu background",
+   "default": "#FFFFFF",
+   "reqd": 1
+  },
+  {
+   "fieldname": "menu_text",
+   "fieldtype": "Color",
+   "label": "Menu text and icons",
+   "default": "#36414C",
+   "reqd": 1
+  },
+  {
+   "fieldname": "menu_active",
+   "fieldtype": "Color",
+   "label": "Selected menu item",
+   "default": "#E5F1F1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "layout_section",
+   "fieldtype": "Section Break",
+   "label": "Layout"
+  },
+  {
+   "fieldname": "font_size",
+   "fieldtype": "Int",
+   "label": "Text size (12?18 px)",
+   "default": 14,
+   "reqd": 1
+  },
+  {
+   "fieldname": "radius",
+   "fieldtype": "Int",
+   "label": "Corner roundness (2?16 px)",
+   "default": 6,
+   "reqd": 1
+  },
+  {
+   "fieldname": "density",
+   "fieldtype": "Select",
+   "label": "Control spacing",
+   "options": "comfortable\ncompact",
+   "default": "comfortable",
+   "reqd": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Website Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  }
+ ]
+}

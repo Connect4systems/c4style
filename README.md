@@ -16,9 +16,13 @@ Add the css file in Website Settings, Header TAB:<br>
 
 #### Style settings
 
-Open **Style settings** from the desk navbar or visit `/app/c4style-settings` to choose a color palette, customize primary/accent/background colors, adjust text size and corner roundness, switch between compact and comfortable spacing, or toggle the workspace between narrow and wide. Changes preview immediately. Choose **Save my preferences** to store them against your signed-in account across browsers. **Administrator** and users with the **System Manager** role can choose **Apply style for all users** and confirm to publish shared Desk defaults. Personal preferences take priority. Workspace width and text direction stay personal. Choose automatic, left-to-right, or right-to-left text direction; the expand/narrow arrow follows the reading direction. Reset restores the site defaults; save afterward to keep them. The theme applies to Frappe Desk, not public website pages.
+Open **C4Style ? Style Settings** inside Desk, or search for **Style Settings**. The native Single DocType is available at `/app/style-settings`. Only **System Manager** and **Website Manager** can read and edit it. The header settings button has been removed.
 
-After installing or updating the app, run these commands from the bench directory (replace `your-site` with your site name):
+Choose a palette (C4Style, Ocean, Forest, Sunset) or set individual primary, accent, page background, menu background, menu text/icon, and selected menu item colors. Text size, corner roundness, and spacing are also configurable. Save to apply the shared theme; other sessions receive changes after reloading. Previous personal color overrides no longer override the manager's theme. Styling applies to Frappe Desk.
+
+Every signed-in Desk user can use the arrows in the workspace sidebar to switch between a full menu with icons and labels and a narrow menu with icons only, or expand/narrow the workspace. Links keep tooltips and accessible labels in narrow mode. These preferences save separately for each account and do not grant access to theme settings.
+
+After deploying the updated code, run these commands from the bench directory (replace `your-site` with your site name):
 
 ```sh
 bench --site your-site migrate
@@ -27,7 +31,9 @@ bench --site your-site clear-cache
 bench restart
 ```
 
-Hard-refresh the browser, then open `/app/c4style-settings`. Settings are implemented as a **Page**, so an empty DocType list for the C4Style module is expected.
+Hard-refresh the browser. Migration installs the Single DocType and the C4Style workspace shortcut. Existing `/app/c4style-settings` bookmarks redirect to the native form.
+
+For standalone checks, run `python -B -m unittest discover -s tests -v`. Browser checks require Playwright and its Chromium browser. Full Frappe migration and permissions should also be verified on the target site.
 
 #### License
 

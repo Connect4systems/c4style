@@ -467,3 +467,50 @@ body.c4style-workspace-wide .page-body > .container { max-width: 100%; }
 .c4style-toolbar-link { margin-inline-start: 0.5rem; }
 .btn.btn-primary { background-color: var(--btn-primary); }
 .navbar { background-color: var(--navbar-bg); }
+
+/* Workspace menu colors and personal icon rail. */
+:root {
+    --c4style-menu-bg: #fff;
+    --c4style-menu-text: #36414c;
+    --c4style-menu-active: #e5f1f1;
+}
+.c4style-menu-section .desk-sidebar {
+    background: var(--c4style-menu-bg);
+    color: var(--c4style-menu-text);
+    border-radius: var(--c4style-radius);
+    padding: 8px;
+}
+.desk-sidebar .standard-sidebar-item,
+.desk-sidebar .standard-sidebar-item .item-anchor {
+    color: var(--c4style-menu-text) !important;
+}
+.desk-sidebar .standard-sidebar-item .icon,
+.desk-sidebar .standard-sidebar-item .es-icon {
+    color: var(--c4style-menu-text) !important;
+    stroke: currentColor !important;
+    fill: none !important;
+}
+.desk-sidebar .standard-sidebar-item.selected,
+.desk-sidebar .standard-sidebar-item:hover {
+    background: var(--c4style-menu-active) !important;
+}
+.c4style-menu-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-block-end: 12px; }
+.c4style-menu-controls button { white-space: normal; }
+body.c4style-menu-collapsed .c4style-menu-section {
+    flex: 0 0 76px !important;
+    width: 76px !important;
+    max-width: 76px !important;
+    padding-inline: 4px;
+}
+body.c4style-menu-collapsed .desk-sidebar .sidebar-item-label,
+body.c4style-menu-collapsed .desk-sidebar .sidebar-item-control,
+body.c4style-menu-collapsed .desk-sidebar .standard-sidebar-label,
+body.c4style-menu-collapsed .desk-sidebar .sidebar-search { display: none !important; }
+body.c4style-menu-collapsed .desk-sidebar .item-anchor { justify-content: center; padding-inline: 4px; }
+body.c4style-menu-collapsed .desk-sidebar .sidebar-item-icon { margin-inline: 0 !important; }
+body.c4style-menu-collapsed .desk-sidebar .nested-container { margin-inline: 0; padding-inline: 0; }
+body.c4style-menu-collapsed .c4style-menu-controls { flex-direction: column; }
+body.c4style-menu-collapsed .c4style-menu-controls button { width: 100%; min-height: 32px; }
+@media (prefers-reduced-motion: no-preference) {
+    .c4style-menu-section { transition: flex-basis 160ms ease, max-width 160ms ease; }
+}

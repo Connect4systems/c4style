@@ -6,19 +6,19 @@ import re, ast
 with open('requirements.txt') as f:
 	install_requires = f.read().strip().split('\n')
 
-# get version from __version__ variable in kard_theme/__init__.py
+# get version from __version__ variable in c4style/__init__.py
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 
-with open('newara/__init__.py', 'rb') as f:
+with open('c4style/__init__.py', 'rb') as f:
 	version = str(ast.literal_eval(_version_re.search(
 		f.read().decode('utf-8')).group(1)))
 
 setup(
-	name='newara',
+	name='c4style',
 	version=version,
-	description='Custom Frappe Theme',
-	author='H@LFWARE',
-	author_email='contact@half-ware.com',
+	description='C4Style Frappe Theme',
+	author='Connect 4 Systems',
+	author_email='info@connect4systems.com',
 	packages=find_packages(),
 	zip_safe=False,
 	include_package_data=True,

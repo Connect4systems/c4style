@@ -1,0 +1,1 @@
+recursive-include c4style *.css *.js *.json *.txt

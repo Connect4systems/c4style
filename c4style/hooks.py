@@ -11,7 +11,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/c4style/css/c4style.css"
-# app_include_js = "/assets/c4style/js/c4style.js"
+app_include_js = "/assets/c4style/js/c4style.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/c4style/css/c4style.css"
@@ -226,3 +226,6 @@ app_include_css = "/assets/c4style/css/c4style.css"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
+
+# Include saved site and user appearance in the Desk boot payload.
+extend_bootinfo = "c4style.settings.boot_session"

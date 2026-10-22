@@ -1,0 +1,9 @@
+{
+ "doctype": "Page",
+ "name": "c4style-settings",
+ "page_name": "c4style-settings",
+ "title": "C4Style Settings",
+ "module": "C4Style",
+ "standard": "Yes",
+ "system_page": 0
+}

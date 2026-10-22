@@ -234,7 +234,13 @@ class MenuTests(unittest.TestCase):
         self.assertTrue(self.page.evaluate('frappe.c4style.get_personal().menuCollapsed'))
 
     def test_native_user_drawer_opens_and_closes_with_backdrop(self):
-        self.page.add_style_tag(content='.dropdown-menu{display:none}.dropdown-menu.show{display:block}')
+        self.page.add_style_tag(content='.dropdown-menu{display:none}.dropdown-menu.show{display:block}.navbar{perspective:3200px}.sticky-top{position:sticky;z-index:1020}')
+        self.page.evaluate('''() => {
+            const navbar=document.querySelector('.navbar');
+            const main=document.createElement('div');main.className='main-section';
+            const sticky=document.createElement('div');sticky.className='sticky-top';
+            navbar.before(main);main.appendChild(sticky);sticky.appendChild(navbar);
+        }''')
         self.page.evaluate('''() => {
             const dropdown=document.createElement('div');dropdown.className='dropdown-navbar-user';
             dropdown.innerHTML='<button data-toggle="dropdown" aria-label="User Menu">User</button><div class="dropdown-menu" id="toolbar-user"><a class="dropdown-item" href="/app/user">My profile</a></div>';
@@ -247,6 +253,8 @@ class MenuTests(unittest.TestCase):
         box=self.page.locator('#toolbar-user').bounding_box()
         self.assertAlmostEqual(box['x']+box['width'],self.page.viewport_size['width'],delta=1)
         self.assertAlmostEqual(box['height'],self.page.viewport_size['height'],delta=1)
+        self.assertAlmostEqual(box['y'],0,delta=1)
+        self.assertTrue(self.page.locator('#toolbar-user').evaluate('(el) => {const b=el.getBoundingClientRect();return el.contains(document.elementFromPoint(b.x+20,b.y+20));}'))
         self.page.locator('.c4style-drawer-backdrop').click(position={'x':20,'y':200})
         self.page.wait_for_selector('.c4style-drawer-backdrop',state='detached')
         self.assertFalse(self.page.get_by_role('link',name='My profile').is_visible())
@@ -277,6 +285,13 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('JSON.parse(calls[1].settings).notes[0].text'),'Updated reminder')
         self.page.get_by_role('button',name='Hide pinned note',exact=True).click()
         self.assertEqual(self.page.locator('.c4style-note-window').count(),0)
+
+    def test_menu_offset_overrides_frappe_important_body_reset(self):
+        self.page.add_style_tag(content='body {padding:0!important}')
+        self.enable_app_menu()
+        self.assertEqual(self.page.locator('body').evaluate('(el)=>getComputedStyle(el).paddingInlineStart'),'236px')
+        self.page.get_by_role('button',name='Narrow menu',exact=True).click()
+        self.assertEqual(self.page.locator('body').evaluate('(el)=>getComputedStyle(el).paddingInlineStart'),'72px')
 
 
 if __name__ == '__main__':

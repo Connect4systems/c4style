@@ -557,7 +557,7 @@ body, .form-control, .btn { font-family: var(--c4style-font-family); }
     color: var(--c4style-table-header-text) !important;
 }
 .list-row-head { border-radius: var(--c4style-radius) var(--c4style-radius) 0 0; }
-body.c4style-has-app-menu { padding-inline-start: var(--c4style-app-menu-width); }
+body.c4style-has-app-menu { padding-inline-start: var(--c4style-app-menu-width) !important; }
 body.c4style-has-app-menu.c4style-menu-collapsed { --c4style-app-menu-width: 72px; }
 .c4style-app-menu {
     position: fixed;
@@ -614,7 +614,7 @@ body.c4style-menu-collapsed .c4style-nav-group > .standard-sidebar-item { margin
 .c4style-preview-card { flex: 1; min-width: 0; padding: 16px; border-radius: 8px; }
 .c4style-preview-table { padding: 8px 12px; border-radius: 6px; margin-block: 12px; }
 @media (max-width: 767px) {
-    body.c4style-has-app-menu { padding-inline-start: 0; }
+    body.c4style-has-app-menu { padding-inline-start: 0 !important; }
     .c4style-app-menu { position: relative; inset: auto; width: 100%; max-height: 220px; }
     .c4style-app-menu .c4style-brand { display: none; }
     .c4style-app-menu .desk-sidebar { display: flex; gap: 8px; }
@@ -842,3 +842,57 @@ body[data-input-border-style] .c4style-note textarea { min-height: 150px; backgr
 .c4style-note-move:focus-visible { outline: 2px solid var(--secondary); }
 .c4style-note-window textarea { flex: 1; min-height: 100px; }
 @media print { .c4style-note-window { display: none !important; } }
+
+/* Frappe resets body padding with !important and paints symbols via icon variables. */
+.c4style-app-menu .sidebar-item-icon,
+.c4style-app-menu .icon,
+.c4style-app-menu .es-icon {
+    --icon-stroke: var(--c4style-menu-text);
+    --icon-fill: var(--c4style-menu-text);
+    color: var(--c4style-menu-text) !important;
+}
+.c4style-app-menu { display: flex; flex-direction: column; overflow: hidden; }
+.c4style-brand { flex: 0 0 auto; }
+.c4style-app-menu .desk-sidebar { flex: 1; min-height: 0; overflow: hidden; }
+.c4style-app-menu .desk-sidebar > nav { flex: 1; min-height: 0; overflow-y: auto; }
+.c4style-app-menu .c4style-menu-controls { flex-shrink: 0; margin-block: 0; }
+@media (max-width: 767px) {
+    .c4style-app-menu .desk-sidebar > nav { max-height: 190px; }
+}
+
+/* Native list markup needs separate tokens for filter actions and sidebar pickers. */
+body[data-row-style="separated"] .list-row-container {
+    border-color: color-mix(in srgb, var(--c4style-row-border) 35%, transparent);
+    background: var(--c4style-input-bg);
+    padding-inline: 0;
+}
+body[data-row-style="separated"] .list-row-container:hover { border-color: var(--c4style-row-border); background: var(--c4style-row-hover); }
+body[data-row-style="separated"] .list-row-container .list-subject a { font-weight: 500; }
+body[data-row-style="separated"] .list-row-container .list-subject a[data-name]::before { content: "\270e"; margin-inline-end: 6px; opacity: 0.65; }
+.layout-side-section:not(.c4style-menu-section) > .list-sidebar { background: var(--c4style-panel-bg); padding: 16px; border-radius: var(--c4style-radius); }
+body[data-input-border-style] .list-sidebar .btn.list-sidebar-button {
+    background: var(--c4style-input-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--c4style-input-border) !important;
+    box-shadow: none !important;
+}
+body[data-input-border-style="dashed"] .list-sidebar .btn.list-sidebar-button { border-style: dashed !important; }
+body[data-input-border-style="none"] .list-sidebar .btn.list-sidebar-button { border-style: none !important; }
+body[data-button-style="filled"] .filter-button {
+    background: var(--c4style-secondary-bg) !important;
+    color: var(--c4style-secondary-text) !important;
+    --icon-stroke: var(--c4style-secondary-text);
+}
+body[data-button-style="outline"] .filter-button { background: transparent !important; color: var(--c4style-secondary-bg) !important; border: 1px solid var(--c4style-secondary-bg); }
+.c4style-breadcrumbs { display: flex; align-items: center; gap: 8px; min-width: 80px; max-width: 35%; color: var(--c4style-navbar-text); font-size: 13px; }
+.c4style-breadcrumbs a { color: inherit !important; white-space: nowrap; }
+.c4style-breadcrumbs > span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c4style-breadcrumb-separator { opacity: 0.65; }
+.c4style-breadcrumbs[hidden] { display: none; }
+@media (max-width: 767px) { .c4style-breadcrumbs { max-width: 36%; font-size: 11px; gap: 4px; } }
+/* Native Frappe wraps the navbar in a stacking context and gives it perspective. */
+body.c4style-native-drawers .main-section > .sticky-top { z-index: 1040; }
+body.c4style-native-drawers .navbar { perspective: none !important; }
+body.c4style-compact .list-row-container .list-row { min-height: 32px; padding-block: 4px; }
+body.c4style-compact .list-row-container { margin-block: 4px; }
+body.c4style-compact .form-layout .frappe-control { padding-block: 6px; }

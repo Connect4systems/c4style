@@ -363,6 +363,7 @@
             root.style.setProperty("--c4style-radius", theme.radius + "px");
         const fonts = { system: 'system-ui, -apple-system, "Segoe UI", sans-serif', arial: 'Arial, sans-serif', tahoma: 'Tahoma, sans-serif', georgia: 'Georgia, serif' };
         root.style.setProperty("--c4style-font-family", fonts[theme.fontFamily] || fonts.system);
+        root.style.setProperty("--font-stack", fonts[theme.fontFamily] || fonts.system);
         document.body.classList.toggle("c4style-compact", theme.density === "compact");
         ["headerStyle", "rowStyle", "inputBorderStyle", "fieldStyle", "buttonStyle", "shadowStyle", "menuBehavior"].forEach(key => {
             const supported = {

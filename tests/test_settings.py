@@ -50,7 +50,9 @@ class SettingsTests(unittest.TestCase):
     def test_rejects_invalid_and_injected_values(self):
         for values in ({'primary': 'red;display:none'}, {'fontSize': True},
                        {'radius': float('nan')}, {'direction': 'invalid'},
-                       {'workspaceWide': 1}, {'unknown': 'value'}, []):
+                       {'workspaceWide': 1}, {'unknown': 'value'}, {'fontFamily': 'url(evil)'},
+                       {'navbarBackground': 'red'}, {'textDirection': 'invalid'},
+                       {'brandName': ''}, {'brandName': 'x' * 81}, {'persistentMenu': 1}, []):
             with self.subTest(values=values), self.assertRaises(ValidationError):
                 settings.validate(values)
 
@@ -81,7 +83,7 @@ class SettingsTests(unittest.TestCase):
                 self.doc.save.assert_called_once()
 
     def test_normal_user_cannot_change_colors_through_personal_api(self):
-        for key in ('primary', 'menuBackground', 'menuText', 'menuActive'):
+        for key in ('primary', 'menuBackground', 'menuText', 'menuActive', 'navbarBackground', 'tableHeaderBackground'):
             with self.subTest(key=key), self.assertRaises(PermissionError):
                 settings.save_settings({key: '#ffffff'})
         fake.defaults.set_default.assert_not_called()

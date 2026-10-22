@@ -8,7 +8,10 @@ KEY = 'c4style_settings'
 DEFAULTS = dict(primary='#714B67', accent='#017E84', background='#E5E8EB',
                 fontSize=14, radius=6, density='comfortable', workspaceWide=False,
                 direction='auto', menuCollapsed=False, menuBackground='#FFFFFF',
-                menuText='#36414C', menuActive='#E5F1F1')
+                menuText='#36414C', menuActive='#E5F1F1',
+                navbarBackground='#714B67', navbarText='#FFFFFF', panelBackground='#FFFFFF',
+                tableHeaderBackground='#714B67', tableHeaderText='#FFFFFF',
+                fontFamily='system', textDirection='auto', persistentMenu=True, brandName='C4Style')
 
 
 def validate(settings):
@@ -18,16 +21,22 @@ def validate(settings):
         frappe.throw('Invalid style settings')
     for key, value in settings.items():
         valid = False
-        if key in ('primary', 'accent', 'background', 'menuBackground', 'menuText', 'menuActive'):
+        if key in ('primary', 'accent', 'background', 'menuBackground', 'menuText', 'menuActive',
+                   'navbarBackground', 'navbarText', 'panelBackground',
+                   'tableHeaderBackground', 'tableHeaderText'):
             valid = isinstance(value, str) and re.fullmatch(r'#[0-9a-fA-F]{6}', value)
         elif key in ('fontSize', 'radius'):
             low, high = (12, 18) if key == 'fontSize' else (2, 16)
             valid = type(value) in (int, float) and math.isfinite(value) and low <= value <= high
         elif key == 'density':
             valid = value in ('compact', 'comfortable')
-        elif key == 'direction':
+        elif key in ('direction', 'textDirection'):
             valid = value in ('auto', 'ltr', 'rtl')
-        elif key in ('workspaceWide', 'menuCollapsed'):
+        elif key == 'fontFamily':
+            valid = value in ('system', 'arial', 'tahoma', 'georgia')
+        elif key == 'brandName':
+            valid = isinstance(value, str) and 1 <= len(value.strip()) <= 80
+        elif key in ('workspaceWide', 'menuCollapsed', 'persistentMenu'):
             valid = type(value) is bool
         if not valid:
             frappe.throw('Invalid style setting: ' + key)
@@ -48,13 +57,20 @@ def read_settings(user):
 
 SITE_FIELDS = dict(primary='primary', accent='accent', background='background',
                    fontSize='font_size', radius='radius', density='density',
-                   menuBackground='menu_background', menuText='menu_text', menuActive='menu_active')
+                   menuBackground='menu_background', menuText='menu_text', menuActive='menu_active',
+                   navbarBackground='navbar_background', navbarText='navbar_text',
+                   panelBackground='panel_background', tableHeaderBackground='table_header_background',
+                   tableHeaderText='table_header_text', fontFamily='font_family',
+                   textDirection='text_direction', persistentMenu='persistent_menu', brandName='brand_name')
 PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed'}
 
 
 def document_settings(doc):
-    return {key: doc.get(field) if doc.get(field) is not None else DEFAULTS[key]
-            for key, field in SITE_FIELDS.items()}
+    values = {key: doc.get(field) if doc.get(field) is not None else DEFAULTS[key]
+              for key, field in SITE_FIELDS.items()}
+    if values['persistentMenu'] in (0, 1):
+        values['persistentMenu'] = bool(values['persistentMenu'])
+    return values
 
 
 def get_site_settings():

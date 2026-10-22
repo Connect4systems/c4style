@@ -92,6 +92,62 @@ class MenuTests(unittest.TestCase):
         self.assertTrue(self.page.locator('.sidebar-item-label').is_visible())
         self.assertTrue(self.page.get_by_role('button', name='Narrow menu', exact=True).is_enabled())
 
+    def enable_app_menu(self):
+        self.page.evaluate('''() => {
+            frappe.boot.allowed_workspaces = [
+                {name:'Accounting',title:'Accounting',public:1,icon:'accounting'},
+                {name:'Reports',title:'Reports',public:1,parent_page:'Accounting'},
+                {name:'Private notes',title:'Private notes',public:0},
+                {name:'Hidden',title:'Hidden',public:1,is_hidden:1}
+            ];
+            frappe.c4style.apply_theme({persistentMenu:true,brandName:'Connect 4',fontFamily:'tahoma',navbarBackground:'#3F6212',navbarText:'#FFFFFF',tableHeaderBackground:'#3F6212',tableHeaderText:'#FFFFFF'});
+        }''')
+
+    def test_persistent_menu_uses_allowed_workspaces_and_removes_duplicate_sidebar(self):
+        self.enable_app_menu()
+        nav = self.page.locator('.c4style-app-menu')
+        self.assertTrue(nav.is_visible())
+        self.assertEqual(nav.locator('a[data-workspace]').count(), 3)
+        self.assertEqual(nav.locator('a[data-workspace="Private notes"]').get_attribute('href'), '/app/private/private-notes')
+        self.assertEqual(nav.locator('details a[data-workspace="Reports"]').count(), 1)
+        self.assertFalse(self.page.locator('.layout-side-section').is_visible())
+        self.assertEqual(self.page.locator('[data-c4style-menu-controls]').count(), 1)
+        self.page.get_by_role('button', name='Narrow menu', exact=True).click()
+        self.assertFalse(nav.locator('.sidebar-item-label').first.is_visible())
+        self.assertTrue(nav.locator('a[data-workspace="Reports"]').is_visible())
+        self.assertEqual(nav.evaluate('(el) => getComputedStyle(el).width'), '72px')
+        self.assertEqual(self.page.locator('nav.navbar').evaluate('(el) => getComputedStyle(el).backgroundColor'), 'rgb(63, 98, 18)')
+
+    def test_direction_switch_saves_personally_and_moves_navigation(self):
+        self.enable_app_menu()
+        self.page.get_by_role('button', name='Switch to right-to-left').click()
+        self.assertEqual(self.page.locator('html').get_attribute('dir'), 'rtl')
+        self.assertEqual(self.page.evaluate('JSON.parse(calls[0].settings)'), {'direction':'rtl'})
+        box = self.page.locator('.c4style-app-menu').bounding_box()
+        self.assertAlmostEqual(box['x'] + box['width'], self.page.viewport_size['width'], delta=1)
+        self.page.get_by_role('button', name='Switch to left-to-right').click()
+        self.assertEqual(self.page.locator('html').get_attribute('dir'), 'ltr')
+
+    def test_persistent_menu_can_be_disabled_without_losing_native_controls(self):
+        self.enable_app_menu()
+        self.page.evaluate('frappe.c4style.apply_theme({persistentMenu:false})')
+        self.assertEqual(self.page.locator('.c4style-app-menu').count(), 0)
+        self.assertTrue(self.page.locator('.layout-side-section').is_visible())
+        self.assertTrue(self.page.get_by_role('button', name='Narrow menu', exact=True).is_visible())
+
+    def test_lime_palette_coordinates_header_menu_and_table(self):
+        self.page.add_script_tag(content=(ROOT / 'c4style/c4style/doctype/style_settings/style_settings.js').read_text(encoding='utf-8'))
+        self.page.evaluate('formEvents.palette({doc:{palette:"Lime Fresh"},set_value:values=>{window.paletteValues=values;}})')
+        self.assertEqual(self.page.evaluate('paletteValues.navbar_background'), '#3F6212')
+        self.assertEqual(self.page.evaluate('paletteValues.table_header_background'), '#3F6212')
+        self.assertEqual(self.page.evaluate('paletteValues.menu_background'), '#365314')
+
+    def test_mobile_navigation_does_not_overflow_the_viewport(self):
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.enable_app_menu()
+        self.assertTrue(self.page.locator('.c4style-app-menu').is_visible())
+        self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+
 
 if __name__ == '__main__':
     unittest.main()

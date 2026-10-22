@@ -10,7 +10,10 @@
         theme = { ...theme, ...values };
         const root = document.documentElement;
         const variables = {
-            primary: ["--primary", "--btn-primary", "--navbar-bg"],
+            primary: ["--primary", "--btn-primary"],
+            navbarBackground: ["--navbar-bg"], navbarText: ["--c4style-navbar-text"],
+            panelBackground: ["--c4style-panel-bg"],
+            tableHeaderBackground: ["--c4style-table-header-bg"], tableHeaderText: ["--c4style-table-header-text"],
             accent: ["--secondary"], background: ["--bg-color"],
             menuBackground: ["--c4style-menu-bg"], menuText: ["--c4style-menu-text"],
             menuActive: ["--c4style-menu-active"],
@@ -29,13 +32,19 @@
         }
         if (Number.isFinite(theme.radius) && theme.radius >= 2 && theme.radius <= 16)
             root.style.setProperty("--c4style-radius", theme.radius + "px");
+        const fonts = { system: 'system-ui, -apple-system, "Segoe UI", sans-serif', arial: 'Arial, sans-serif', tahoma: 'Tahoma, sans-serif', georgia: 'Georgia, serif' };
+        root.style.setProperty("--c4style-font-family", fonts[theme.fontFamily] || fonts.system);
         document.body.classList.toggle("c4style-compact", theme.density === "compact");
+        applyPersonal();
+        syncNavigation();
+        refreshMenus();
     }
 
     function applyPersonal() {
         document.body.classList.toggle("c4style-menu-collapsed", personal.menuCollapsed);
         document.body.classList.toggle("c4style-workspace-wide", personal.workspaceWide);
-        document.documentElement.setAttribute("dir", personal.direction === "auto" ? originalDirection : personal.direction);
+        const siteDirection = theme.textDirection === "rtl" || theme.textDirection === "ltr" ? theme.textDirection : originalDirection;
+        document.documentElement.setAttribute("dir", personal.direction === "auto" ? siteDirection : personal.direction);
     }
 
     function savePersonal(key, value) {
@@ -56,6 +65,11 @@
         document.querySelectorAll(".desk-sidebar").forEach(sidebar => {
             const section = sidebar.closest(".layout-side-section");
             if (section) section.classList.add("c4style-menu-section");
+            if (document.body.classList.contains("c4style-has-app-menu") && !sidebar.closest(".c4style-app-menu")) {
+                const controls = sidebar.querySelector("[data-c4style-menu-controls]");
+                if (controls) controls.remove();
+                return;
+            }
             if (!sidebar.querySelector("[data-c4style-menu-controls]")) {
                 const controls = document.createElement("div");
                 controls.dataset.c4styleMenuControls = "true";
@@ -68,6 +82,12 @@
                     button.addEventListener("click", () => savePersonal(key, !personal[key]));
                     controls.appendChild(button);
                 });
+                const direction = document.createElement("button");
+                direction.type = "button";
+                direction.className = "btn btn-default btn-sm";
+                direction.dataset.c4styleDirection = "true";
+                direction.addEventListener("click", () => savePersonal("direction", document.documentElement.dir === "rtl" ? "ltr" : "rtl"));
+                controls.appendChild(direction);
                 sidebar.prepend(controls);
             }
             sidebar.querySelectorAll(".item-anchor").forEach(anchor => {
@@ -75,6 +95,13 @@
                 if (label && !anchor.title) anchor.title = label.textContent.trim();
                 if (label && !anchor.getAttribute("aria-label")) anchor.setAttribute("aria-label", label.textContent.trim());
             });
+        });
+        document.querySelectorAll("[data-c4style-direction]").forEach(button => {
+            const rtl = document.documentElement.dir === "rtl";
+            button.textContent !== (rtl ? "LTR" : "RTL") && (button.textContent = rtl ? "LTR" : "RTL");
+            const label = rtl ? __("Switch to left-to-right") : __("Switch to right-to-left");
+            button.title = label;
+            button.setAttribute("aria-label", label);
         });
         document.querySelectorAll("[data-c4style-toggle]").forEach(button => {
             const menu = button.dataset.c4styleToggle === "menuCollapsed";
@@ -88,6 +115,117 @@
             button.title = label;
             button.setAttribute("aria-label", label);
             button.setAttribute("aria-pressed", String(active));
+        });
+    }
+
+    function syncNavigation() {
+        const workspaces = (frappe.boot && frappe.boot.allowed_workspaces) || [];
+        const existing = document.querySelector(".c4style-app-menu");
+        if (!theme.persistentMenu || !workspaces.length) {
+            if (existing) existing.remove();
+            document.body.classList.remove("c4style-has-app-menu");
+            return;
+        }
+        if (existing) {
+            existing.querySelector(".c4style-brand-label").textContent = theme.brandName || "C4Style";
+            return;
+        }
+        const nav = document.createElement("aside");
+        nav.className = "c4style-app-menu";
+        nav.setAttribute("aria-label", __("Workspace navigation"));
+        const brand = document.createElement("a");
+        brand.className = "c4style-brand";
+        brand.href = "/app";
+        const mark = document.createElement("span");
+        mark.className = "c4style-brand-mark";
+        mark.textContent = "C4";
+        const logo = frappe.boot.app_logo_url;
+        if (typeof logo === "string" && (/^\/(?!\/)/.test(logo) || /^https:\/\//i.test(logo))) {
+            const img = document.createElement("img");
+            img.src = logo; img.alt = "";
+            mark.replaceChildren(img);
+        }
+        const name = document.createElement("span");
+        name.className = "c4style-brand-label";
+        name.textContent = theme.brandName || "C4Style";
+        brand.append(mark, name);
+        const menu = document.createElement("div");
+        menu.className = "desk-sidebar";
+        const links = document.createElement("nav");
+        links.setAttribute("aria-label", __("Workspaces"));
+        menu.appendChild(links);
+        nav.append(brand, menu);
+        const visible = workspaces.filter(item => !item.is_hidden);
+        const nodes = new Map();
+        visible.forEach(item => {
+            const title = item.title || item.name;
+            if (!title) return;
+            const row = document.createElement("div");
+            row.className = "desk-sidebar-item standard-sidebar-item";
+            const anchor = document.createElement("a");
+            anchor.className = "item-anchor";
+            const slug = frappe.router && frappe.router.slug ? frappe.router.slug(title) : title.toLowerCase().replace(/\s+/g, "-");
+            anchor.href = "/app/" + (item.public ? "" : "private/") + encodeURIComponent(slug);
+            anchor.dataset.workspace = title;
+            anchor.title = __(title);
+            anchor.setAttribute("aria-label", __(title));
+            const icon = document.createElement("span");
+            icon.className = "sidebar-item-icon";
+            if (frappe.utils && frappe.utils.icon) {
+                const iconName = /^[a-z0-9-]+$/i.test(item.icon || "") ? item.icon : "folder-normal";
+                icon.innerHTML = frappe.utils.icon(iconName, "md");
+            } else icon.textContent = title.slice(0, 1).toUpperCase();
+            const label = document.createElement("span");
+            label.className = "sidebar-item-label";
+            label.textContent = __(title);
+            anchor.append(icon, label);
+            row.appendChild(anchor);
+            nodes.set(item.name || title, { row, item });
+        });
+        const hasChildren = key => visible.some(item => item.parent_page === key);
+        nodes.forEach(({ row, item }, key) => {
+            let node = row;
+            if (hasChildren(key)) {
+                const group = document.createElement("details");
+                group.className = "c4style-nav-group";
+                group.open = true;
+                const summary = document.createElement("summary");
+                summary.appendChild(row);
+                group.appendChild(summary);
+                node = group;
+            }
+            nodes.get(key).node = node;
+        });
+        nodes.forEach(({ node, item }) => {
+            const parent = nodes.get(item.parent_page);
+            // Bad workspace trees must not prevent Desk from rendering.
+            const seen = new Set([item.name || item.title]);
+            let ancestor = parent;
+            let cyclic = false;
+            while (ancestor) {
+                const key = ancestor.item.name || ancestor.item.title;
+                if (seen.has(key)) { cyclic = true; break; }
+                seen.add(key);
+                ancestor = nodes.get(ancestor.item.parent_page);
+            }
+            if (!cyclic && parent && parent.node.tagName === "DETAILS") parent.node.appendChild(node);
+            else links.appendChild(node);
+        });
+        document.body.prepend(nav);
+        document.body.classList.add("c4style-has-app-menu");
+        links.addEventListener("click", event => {
+            const anchor = event.target.closest("a[data-workspace]");
+            if (anchor) markActiveWorkspace(anchor.pathname);
+        });
+        markActiveWorkspace(window.location.pathname);
+    }
+
+    function markActiveWorkspace(path) {
+        document.querySelectorAll(".c4style-app-menu a[data-workspace]").forEach(anchor => {
+            const active = decodeURI(anchor.pathname) === decodeURI(path);
+            anchor.closest(".standard-sidebar-item").classList.toggle("selected", active);
+            if (active) anchor.setAttribute("aria-current", "page");
+            else anchor.removeAttribute("aria-current");
         });
     }
 
@@ -107,6 +245,9 @@
         applyPersonal();
         refreshMenus();
         new MutationObserver(refreshMenus).observe(document.body, { childList: true, subtree: true });
+        if (frappe.router && frappe.router.on) frappe.router.on("change", () => {
+            markActiveWorkspace(window.location.pathname);
+        });
     }
     if (document.body) start();
     else document.addEventListener("DOMContentLoaded", start, { once: true });

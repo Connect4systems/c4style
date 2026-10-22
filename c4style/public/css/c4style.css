@@ -514,3 +514,119 @@ body.c4style-menu-collapsed .c4style-menu-controls button { width: 100%; min-hei
 @media (prefers-reduced-motion: no-preference) {
     .c4style-menu-section { transition: flex-basis 160ms ease, max-width 160ms ease; }
 }
+
+/* Coordinated Desk styling inspired by the reference walkthrough. */
+:root {
+    --c4style-navbar-text: #fff;
+    --c4style-panel-bg: #fff;
+    --c4style-table-header-bg: #714b67;
+    --c4style-table-header-text: #fff;
+    --c4style-app-menu-width: 236px;
+    --c4style-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body, .form-control, .btn { font-family: var(--c4style-font-family); }
+.navbar {
+    background: var(--navbar-bg) !important;
+    border-end-start-radius: var(--c4style-radius);
+    border-end-end-radius: var(--c4style-radius);
+    box-shadow: 0 3px 14px rgb(0 0 0 / 8%);
+}
+.navbar .navbar-expand span, .navbar .navbar-expand li a,
+#navbar-breadcrumbs a, .navbar .nav-item button.nav-link {
+    color: var(--c4style-navbar-text) !important;
+}
+.navbar .nav-link > .icon, .navbar .nav-link > .es-icon {
+    stroke: var(--c4style-navbar-text) !important;
+}
+.page-head, .page-content .layout-main-section,
+.widget.links-widget-box, .widget.dashboard-widget-box,
+.widget.links-widget-box .widget-head .widget-label .widget-title {
+    background-color: var(--c4style-panel-bg) !important;
+}
+.page-content .layout-main-section, .widget {
+    border-radius: var(--c4style-radius);
+    box-shadow: 0 3px 16px rgb(20 30 50 / 4%);
+}
+.level.list-row-head, .level.list-row-head .level-item,
+.grid-heading-row, .datatable .dt-row-header .dt-cell {
+    background: var(--c4style-table-header-bg) !important;
+    color: var(--c4style-table-header-text) !important;
+}
+.list-row-head a, .list-row-head .list-header-subject,
+.grid-heading-row .static-area {
+    color: var(--c4style-table-header-text) !important;
+}
+.list-row-head { border-radius: var(--c4style-radius) var(--c4style-radius) 0 0; }
+body.c4style-has-app-menu { padding-inline-start: var(--c4style-app-menu-width); }
+body.c4style-has-app-menu.c4style-menu-collapsed { --c4style-app-menu-width: 72px; }
+.c4style-app-menu {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: var(--c4style-app-menu-width);
+    background: var(--c4style-menu-bg);
+    color: var(--c4style-menu-text);
+    border-inline-end: 1px solid rgb(128 128 128 / 15%);
+    z-index: 1030;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+.c4style-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 12px;
+    min-height: 64px;
+    color: var(--c4style-menu-text) !important;
+    font-weight: 700;
+    text-decoration: none !important;
+}
+.c4style-brand-mark {
+    flex: 0 0 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--c4style-menu-active);
+    overflow: hidden;
+}
+.c4style-brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+.c4style-brand-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c4style-app-menu .desk-sidebar { padding: 8px; }
+.c4style-app-menu .item-anchor { display: flex; align-items: center; gap: 10px; padding: 9px; min-height: 40px; }
+.c4style-app-menu .sidebar-item-icon { display: grid; place-items: center; flex: 0 0 22px; }
+.c4style-app-menu .sidebar-item-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c4style-app-menu .standard-sidebar-item { border-radius: var(--c4style-radius); margin-block: 3px; }
+.c4style-app-menu a:focus-visible, .c4style-app-menu summary:focus-visible { outline: 2px solid var(--secondary); outline-offset: -2px; }
+.c4style-nav-group > summary { cursor: pointer; }
+.c4style-nav-group > summary > .standard-sidebar-item { display: inline-flex; width: calc(100% - 20px); }
+.c4style-nav-group > summary .item-anchor { min-width: 0; width: 100%; }
+.c4style-nav-group > .standard-sidebar-item, .c4style-nav-group > .c4style-nav-group { margin-inline-start: 12px; }
+body.c4style-has-app-menu .layout-side-section.c4style-menu-section { display: none !important; }
+body.c4style-menu-collapsed .c4style-brand-label { display: none; }
+body.c4style-menu-collapsed .c4style-brand { justify-content: center; padding-inline: 8px; }
+body.c4style-menu-collapsed .c4style-app-menu .c4style-menu-controls { gap: 4px; }
+body.c4style-menu-collapsed .c4style-nav-group > .standard-sidebar-item { margin-inline-start: 0; }
+.c4style-theme-preview { border: 1px solid var(--border-color, #d1d8dd); border-radius: 10px; overflow: hidden; }
+.c4style-preview-header { padding: 12px 20px; font-weight: 700; }
+.c4style-preview-body { display: flex; gap: 16px; padding: 16px; }
+.c4style-preview-menu { flex: 0 0 130px; padding: 16px; border-radius: 8px; }
+.c4style-preview-card { flex: 1; min-width: 0; padding: 16px; border-radius: 8px; }
+.c4style-preview-table { padding: 8px 12px; border-radius: 6px; margin-block: 12px; }
+@media (max-width: 767px) {
+    body.c4style-has-app-menu { padding-inline-start: 0; }
+    .c4style-app-menu { position: relative; inset: auto; width: 100%; max-height: 220px; }
+    .c4style-app-menu .c4style-brand { display: none; }
+    .c4style-app-menu .desk-sidebar { display: flex; gap: 8px; }
+    .c4style-app-menu .c4style-menu-controls { flex: 0 0 52px; flex-direction: column; margin: 0; }
+    .c4style-app-menu nav { display: flex; gap: 6px; overflow-x: auto; min-width: 0; }
+    .c4style-app-menu nav > .standard-sidebar-item, .c4style-app-menu nav > details { flex: 0 0 auto; }
+    .c4style-app-menu .item-anchor { max-width: 180px; }
+    .c4style-preview-body { flex-direction: column; }
+    .c4style-preview-menu { flex-basis: auto; }
+}
+
+@media print {
+    .c4style-app-menu { display: none !important; }
+    body.c4style-has-app-menu { padding-inline-start: 0 !important; }
+}

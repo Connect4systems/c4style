@@ -17,7 +17,20 @@
   "layout_section",
   "font_size",
   "radius",
-  "density"
+  "density",
+  "header_section",
+  "navbar_background",
+  "navbar_text",
+  "panel_background",
+  "table_header_background",
+  "table_header_text",
+  "navigation_section",
+  "brand_name",
+  "persistent_menu",
+  "font_family",
+  "text_direction",
+  "preview_section",
+  "theme_preview"
  ],
  "fields": [
   {
@@ -29,7 +42,7 @@
    "fieldname": "palette",
    "fieldtype": "Select",
    "label": "Color palette",
-   "options": "C4Style\nOcean\nForest\nSunset\nCustom",
+   "options": "C4Style\nOcean\nForest\nSunset\nLime Fresh\nWine\nCustom",
    "default": "C4Style"
   },
   {
@@ -87,14 +100,14 @@
   {
    "fieldname": "font_size",
    "fieldtype": "Int",
-   "label": "Text size (12?18 px)",
+   "label": "Text size (12 to 18 px)",
    "default": 14,
    "reqd": 1
   },
   {
    "fieldname": "radius",
    "fieldtype": "Int",
-   "label": "Corner roundness (2?16 px)",
+   "label": "Corner roundness (2 to 16 px)",
    "default": 6,
    "reqd": 1
   },
@@ -105,6 +118,90 @@
    "options": "comfortable\ncompact",
    "default": "comfortable",
    "reqd": 1
+  },
+  {
+   "fieldname": "header_section",
+   "fieldtype": "Section Break",
+   "label": "Header, cards and tables"
+  },
+  {
+   "fieldname": "navbar_background",
+   "fieldtype": "Color",
+   "label": "Header background",
+   "default": "#714B67",
+   "reqd": 1
+  },
+  {
+   "fieldname": "navbar_text",
+   "fieldtype": "Color",
+   "label": "Header text and icons",
+   "default": "#FFFFFF",
+   "reqd": 1
+  },
+  {
+   "fieldname": "panel_background",
+   "fieldtype": "Color",
+   "label": "Card and form background",
+   "default": "#FFFFFF",
+   "reqd": 1
+  },
+  {
+   "fieldname": "table_header_background",
+   "fieldtype": "Color",
+   "label": "Table header background",
+   "default": "#714B67",
+   "reqd": 1
+  },
+  {
+   "fieldname": "table_header_text",
+   "fieldtype": "Color",
+   "label": "Table header text",
+   "default": "#FFFFFF",
+   "reqd": 1
+  },
+  {
+   "fieldname": "navigation_section",
+   "fieldtype": "Section Break",
+   "label": "Navigation and typography"
+  },
+  {
+   "fieldname": "brand_name",
+   "fieldtype": "Data",
+   "label": "Menu brand name",
+   "default": "C4Style",
+   "reqd": 1
+  },
+  {
+   "fieldname": "persistent_menu",
+   "fieldtype": "Check",
+   "label": "Show workspace menu on every Desk page",
+   "default": "1",
+   "description": "Uses only workspaces already permitted for the signed-in user."
+  },
+  {
+   "fieldname": "font_family",
+   "fieldtype": "Select",
+   "label": "Font family",
+   "options": "system\narial\ntahoma\ngeorgia",
+   "default": "system",
+   "reqd": 1
+  },
+  {
+   "fieldname": "text_direction",
+   "fieldtype": "Select",
+   "label": "Default text direction",
+   "options": "auto\nltr\nrtl",
+   "default": "auto",
+   "reqd": 1
+  },
+  {
+   "fieldname": "preview_section",
+   "fieldtype": "Section Break",
+   "label": "Preview"
+  },
+  {
+   "fieldname": "theme_preview",
+   "fieldtype": "HTML"
   }
  ],
  "permissions": [

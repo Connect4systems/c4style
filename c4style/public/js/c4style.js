@@ -263,8 +263,10 @@ ${boot.can_manage ? `<button class="btn btn-default" data-action="publish">${__(
 		navbar.appendChild(button);
 	}
 
-	frappe.pages["c4style-settings"] = frappe.pages["c4style-settings"] || {};
-	frappe.pages["c4style-settings"].on_page_load = buildSettingsPage;
+	// Page events must be attached only after Frappe creates the page wrapper.
+	// Pre-populating frappe.pages makes PageView skip its constructor entirely.
+	frappe.c4style = frappe.c4style || {};
+	frappe.c4style.build_settings_page = buildSettingsPage;
 
 	settings = boot.site ? settings : readSettings();
 	applySettings();

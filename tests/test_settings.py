@@ -110,6 +110,20 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(doc['issingle'], 1)
         self.assertEqual({p['role'] for p in doc['permissions']}, {'System Manager', 'Website Manager'})
 
+    def test_notes_validate_limits_and_do_not_change_site_colors(self):
+        note={'id':'one','text':'Private reminder','color':'mint'}
+        settings.save_settings({'notes':[note]})
+        args, kwargs = fake.defaults.set_default.call_args
+        self.assertEqual(json.loads(args[1])['notes'],[note])
+        self.assertEqual(kwargs['parent'],fake.session.user)
+        for notes in ([dict(note,text='x'*4001)],[note,note],[dict(note,color='red')],[dict(note,owner='someone')], [dict(note,id=str(index),text='x'*4000) for index in range(20)]):
+            with self.subTest(notes=notes), self.assertRaises(ValidationError):
+                settings.validate({'notes':notes})
+
+    def test_new_component_options_are_validated(self):
+        for values in ({'headerStyle':'javascript:evil'},{'announcementSpeed':0},{'announcementText':'x'*1001}, {'inputBorderStyle':'url(evil)'}):
+            with self.subTest(values=values),self.assertRaises(ValidationError):settings.validate(values)
+
 
 if __name__ == '__main__':
     unittest.main()

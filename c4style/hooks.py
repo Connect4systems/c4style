@@ -11,7 +11,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/c4style/css/c4style.css"
-app_include_js = "/assets/c4style/js/c4style.js"
+app_include_js = ["/assets/c4style/js/c4style.js", "/assets/c4style/js/desk_tools.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/c4style/css/c4style.css"

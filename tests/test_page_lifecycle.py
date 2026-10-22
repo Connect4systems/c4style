@@ -37,7 +37,7 @@ class MenuTests(unittest.TestCase):
             window.calls = [];
             window.frappe = {
                 session: {user: 'normal@example.com'},
-                boot: {c4style: {site: {menuBackground:'#123456'}, personal:{}, can_manage:false}},
+                boot: {c4style: {site: {menuBackground:'#123456',menuDefaultCollapsed:false,headerStyle:'pill',rowStyle:'separated',inputBorderStyle:'dashed',fieldStyle:'boxed',buttonStyle:'filled',shadowStyle:'soft',menuBehavior:'click',showScrollButtons:true,nativeDrawers:true}, personal:{}, can_manage:false}},
                 pages: {}, show_alert: () => {},
                 ui: {form: {on: (name, events) => { window.formEvents = events; }}},
                 call(options) {
@@ -50,6 +50,7 @@ class MenuTests(unittest.TestCase):
             };
         ''')
         self.page.add_script_tag(content=(ROOT / 'c4style/public/js/c4style.js').read_text(encoding='utf-8'))
+        self.page.add_script_tag(content=(ROOT / 'c4style/public/js/desk_tools.js').read_text(encoding='utf-8'))
 
     def tearDown(self):
         self.assertEqual(self.errors, [])
@@ -147,6 +148,135 @@ class MenuTests(unittest.TestCase):
         self.enable_app_menu()
         self.assertTrue(self.page.locator('.c4style-app-menu').is_visible())
         self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
+
+    def test_capsule_header_and_dashed_inputs_match_component_settings(self):
+        self.page.evaluate('''() => {
+            document.body.insertAdjacentHTML('beforeend','<input class="form-control" aria-label="Reference input"><button class="btn btn-default" id="secondary-test">Filter</button>');
+            frappe.c4style.apply_theme({secondaryBackground:'#A58F7A',secondaryText:'#FFFFFF'});
+        }''')
+        self.assertEqual(self.page.locator('.navbar').evaluate('(el) => getComputedStyle(el).borderRadius'), '999px')
+        self.assertEqual(self.page.get_by_role('textbox',name='Reference input').evaluate('(el) => getComputedStyle(el).borderTopStyle'), 'dashed')
+        self.assertEqual(self.page.locator('#secondary-test').evaluate('(el) => getComputedStyle(el).backgroundColor'), 'rgb(165, 143, 122)')
+
+    def test_announcement_is_plain_text_and_can_be_dismissed(self):
+        self.page.evaluate('frappe.c4style.apply_theme({enableAnnouncement:true,announcementText:"<b>Test announcement</b>",announcementSpeed:18})')
+        self.assertEqual(self.page.locator('.c4style-announcement-message').inner_text(), '<b>Test announcement</b>')
+        self.assertEqual(self.page.locator('.c4style-announcement b').count(),0)
+        self.page.get_by_role('button',name='Dismiss announcement').click()
+        self.assertEqual(self.page.locator('.c4style-announcement').count(),0)
+        self.page.evaluate('frappe.c4style.sync_tools()')
+        self.assertEqual(self.page.locator('.c4style-announcement').count(),0)
+
+    def test_normal_user_tools_do_not_offer_shared_theme_edits(self):
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.assertTrue(self.page.get_by_role('dialog',name='Appearance tools').is_visible())
+        self.assertEqual(self.page.get_by_role('button',name='Choose site theme').count(),0)
+        self.assertEqual(self.page.get_by_role('button',name='Style Settings',exact=True).count(),0)
+        self.assertTrue(self.page.get_by_role('button',name='My sticky notes').is_visible())
+        self.page.keyboard.press('Escape')
+        self.assertEqual(self.page.get_by_role('dialog').count(),0)
+
+    def test_manager_palette_picker_requires_confirmation(self):
+        self.page.evaluate('''() => {
+            frappe.boot.c4style.can_manage=true;
+            frappe.confirm=(message,confirm)=>{window.pendingConfirmation=confirm;};
+        }''')
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='Choose site theme',exact=True).click()
+        self.page.get_by_role('button',name='Lime Fresh',exact=True).click()
+        self.assertEqual(self.page.evaluate('calls.length'),0)
+        self.page.evaluate('pendingConfirmation()')
+        self.assertEqual(self.page.evaluate('calls[0].scope'),'site')
+        self.assertEqual(self.page.evaluate('calls[0].palette'),'Lime Fresh')
+
+    def test_app_launcher_filters_allowed_workspaces(self):
+        self.enable_app_menu()
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='Apps and workspaces',exact=True).click()
+        self.page.get_by_role('searchbox',name='Find a workspace').fill('private')
+        self.assertEqual(self.page.locator('.c4style-app-tile:visible').count(),1)
+        self.assertEqual(self.page.locator('.c4style-app-tile:visible').get_attribute('href'),'/app/private/private-notes')
+
+    def test_sticky_notes_are_saved_only_on_explicit_save(self):
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='My sticky notes',exact=True).click()
+        self.page.get_by_role('button',name='Add note').click()
+        self.page.get_by_role('textbox',name='Note text').fill('Call supplier <script>hello</script>')
+        self.assertEqual(self.page.evaluate('calls.length'),0)
+        self.page.get_by_role('button',name='Save notes').click()
+        self.assertEqual(self.page.evaluate('JSON.parse(calls[0].settings).notes[0].text'),'Call supplier <script>hello</script>')
+
+    def test_grouping_loaded_rows_preserves_links_selection_and_ungroup_order(self):
+        self.page.evaluate('''() => {
+            const result=document.createElement('div');result.id='group-result';
+            const data=[{name:'A',item_group:'Hardware'},{name:'B',item_group:'Services'},{name:'C',item_group:'Hardware'}];
+            result.innerHTML=data.map(doc=>`<div class="list-row-container"><input type="checkbox" data-name="${doc.name}"><a href="/app/item/${doc.name}">${doc.name}</a></div>`).join('');
+            document.body.appendChild(result);
+            window.cur_list={$result:[result],data,columns:[{df:{fieldname:'item_group',fieldtype:'Link',label:'Item group'}}]};
+            frappe.c4style.sync_tools();
+        }''')
+        self.page.get_by_role('combobox',name='Group loaded rows').select_option('item_group')
+        self.assertEqual(self.page.locator('.c4style-list-group').count(),2)
+        self.page.get_by_role('button',name='Hardware (2)',exact=True).click()
+        self.assertEqual(self.page.locator('#group-result .list-row-container:visible').count(),1)
+        self.page.get_by_role('combobox',name='Group loaded rows').select_option('')
+        self.assertEqual(self.page.locator('#group-result a').all_text_contents(),['A','B','C'])
+        self.assertEqual(self.page.locator('#group-result input[type="checkbox"]').count(),3)
+
+    def test_hover_mode_expands_collapsed_menu_without_changing_saved_preference(self):
+        self.enable_app_menu()
+        self.page.evaluate('frappe.c4style.apply_theme({menuBehavior:"hover"})')
+        self.page.get_by_role('button',name='Narrow menu',exact=True).click()
+        self.page.mouse.click(900,500)
+        self.assertFalse(self.page.locator('.c4style-app-menu .sidebar-item-label').first.is_visible())
+        self.page.locator('.c4style-brand').hover()
+        self.assertTrue(self.page.locator('.c4style-app-menu .sidebar-item-label').first.is_visible())
+        self.assertTrue(self.page.evaluate('frappe.c4style.get_personal().menuCollapsed'))
+
+    def test_native_user_drawer_opens_and_closes_with_backdrop(self):
+        self.page.add_style_tag(content='.dropdown-menu{display:none}.dropdown-menu.show{display:block}')
+        self.page.evaluate('''() => {
+            const dropdown=document.createElement('div');dropdown.className='dropdown-navbar-user';
+            dropdown.innerHTML='<button data-toggle="dropdown" aria-label="User Menu">User</button><div class="dropdown-menu" id="toolbar-user"><a class="dropdown-item" href="/app/user">My profile</a></div>';
+            document.querySelector('.navbar').appendChild(dropdown);
+            dropdown.querySelector('button').addEventListener('click',()=>{dropdown.classList.toggle('show');dropdown.querySelector('.dropdown-menu').classList.toggle('show');});
+            frappe.c4style.sync_tools();
+        }''')
+        self.page.get_by_role('button',name='User Menu',exact=True).click()
+        self.page.wait_for_selector('.c4style-drawer-backdrop')
+        box=self.page.locator('#toolbar-user').bounding_box()
+        self.assertAlmostEqual(box['x']+box['width'],self.page.viewport_size['width'],delta=1)
+        self.assertAlmostEqual(box['height'],self.page.viewport_size['height'],delta=1)
+        self.page.locator('.c4style-drawer-backdrop').click(position={'x':20,'y':200})
+        self.page.wait_for_selector('.c4style-drawer-backdrop',state='detached')
+        self.assertFalse(self.page.get_by_role('link',name='My profile').is_visible())
+
+    def test_scroll_buttons_scroll_page_in_reduced_motion(self):
+        self.page.emulate_media(reduced_motion='reduce')
+        self.page.evaluate('document.body.style.minHeight="3000px"')
+        self.page.get_by_role('button',name='Scroll to bottom',exact=True).click()
+        self.assertGreater(self.page.evaluate('window.scrollY'),1000)
+        self.page.get_by_role('button',name='Scroll to top',exact=True).click()
+        self.assertEqual(self.page.evaluate('window.scrollY'),0)
+
+    def test_saved_notes_can_be_pinned_and_moved_with_keyboard(self):
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='My sticky notes',exact=True).click()
+        self.page.get_by_role('button',name='Add note').click()
+        self.page.get_by_role('textbox',name='Note text',exact=True).fill('Private reminder')
+        self.page.get_by_role('button',name='Save notes',exact=True).click()
+        self.page.get_by_role('button',name='Pin saved notes',exact=True).click()
+        window=self.page.locator('.c4style-note-window')
+        self.assertTrue(window.is_visible())
+        before=window.bounding_box()
+        self.page.get_by_role('button',name='Move note with arrow keys or drag').focus()
+        self.page.keyboard.press('ArrowRight')
+        self.assertAlmostEqual(window.bounding_box()['x'],before['x']+10,delta=1)
+        self.page.get_by_role('textbox',name='Pinned note text',exact=True).fill('Updated reminder')
+        self.page.get_by_role('button',name='Save note',exact=True).click()
+        self.assertEqual(self.page.evaluate('JSON.parse(calls[1].settings).notes[0].text'),'Updated reminder')
+        self.page.get_by_role('button',name='Hide pinned note',exact=True).click()
+        self.assertEqual(self.page.locator('.c4style-note-window').count(),0)
 
 
 if __name__ == '__main__':

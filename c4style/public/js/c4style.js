@@ -1,8 +1,333 @@
 (() => {
     "use strict";
+    const palettes = {
+    "C4Style": {
+        "primary": "#714B67",
+        "accent": "#017E84",
+        "background": "#E5E8EB",
+        "menu_background": "#FFFFFF",
+        "menu_text": "#36414C",
+        "menu_active": "#E5F1F1",
+        "navbar_background": "#714B67",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#714B67",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#E5E8EB",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Ocean": {
+        "primary": "#155E75",
+        "accent": "#0284C7",
+        "background": "#EAF2F8",
+        "menu_background": "#153747",
+        "menu_text": "#F0F9FF",
+        "menu_active": "#24566B",
+        "navbar_background": "#155E75",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#155E75",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#EAF2F8",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Forest": {
+        "primary": "#365C46",
+        "accent": "#4F8A62",
+        "background": "#EEF3EE",
+        "menu_background": "#203D2D",
+        "menu_text": "#F0FDF4",
+        "menu_active": "#365C46",
+        "navbar_background": "#365C46",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#365C46",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#EEF3EE",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Sunset": {
+        "primary": "#8B4A3C",
+        "accent": "#D47A45",
+        "background": "#F7F0E8",
+        "menu_background": "#4A2D28",
+        "menu_text": "#FFF7ED",
+        "menu_active": "#75483C",
+        "navbar_background": "#8B4A3C",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#8B4A3C",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#F7F0E8",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Lime Fresh": {
+        "primary": "#3F6212",
+        "accent": "#65A30D",
+        "background": "#F2F8EC",
+        "menu_background": "#365314",
+        "menu_text": "#F7FEE7",
+        "menu_active": "#4D7C0F",
+        "navbar_background": "#3F6212",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#F9FCF7",
+        "table_header_background": "#3F6212",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#F2F8EC",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Wine": {
+        "primary": "#831843",
+        "accent": "#BE185D",
+        "background": "#FFF1F5",
+        "menu_background": "#701A3D",
+        "menu_text": "#FFF1F5",
+        "menu_active": "#9D2854",
+        "navbar_background": "#831843",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#831843",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#FFF1F5",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Crimson Red": {
+        "primary": "#9F1239",
+        "accent": "#E11D48",
+        "background": "#FFF1F2",
+        "menu_background": "#881337",
+        "menu_text": "#FFF1F2",
+        "menu_active": "#BE123C",
+        "navbar_background": "#9F1239",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#9F1239",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#FFF1F2",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Ocean Teal": {
+        "primary": "#115E59",
+        "accent": "#0D9488",
+        "background": "#F0FDFA",
+        "menu_background": "#134E4A",
+        "menu_text": "#F0FDFA",
+        "menu_active": "#0F766E",
+        "navbar_background": "#115E59",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#115E59",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#F0FDFA",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Burnt Orange": {
+        "primary": "#9A3412",
+        "accent": "#EA580C",
+        "background": "#FFF7ED",
+        "menu_background": "#7C2D12",
+        "menu_text": "#FFF7ED",
+        "menu_active": "#C2410C",
+        "navbar_background": "#9A3412",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#9A3412",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#FFF7ED",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Indigo Night": {
+        "primary": "#3730A3",
+        "accent": "#6366F1",
+        "background": "#EEF2FF",
+        "menu_background": "#312E81",
+        "menu_text": "#EEF2FF",
+        "menu_active": "#4338CA",
+        "navbar_background": "#3730A3",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#3730A3",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#EEF2FF",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Dark Green": {
+        "primary": "#14532D",
+        "accent": "#16A34A",
+        "background": "#F0FDF4",
+        "menu_background": "#14532D",
+        "menu_text": "#F0FDF4",
+        "menu_active": "#166534",
+        "navbar_background": "#14532D",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#14532D",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#F0FDF4",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Royal Purple": {
+        "primary": "#6B21A8",
+        "accent": "#A855F7",
+        "background": "#FAF5FF",
+        "menu_background": "#581C87",
+        "menu_text": "#FAF5FF",
+        "menu_active": "#7E22CE",
+        "navbar_background": "#6B21A8",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#6B21A8",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#FAF5FF",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Jet Black": {
+        "primary": "#27272A",
+        "accent": "#71717A",
+        "background": "#F4F4F5",
+        "menu_background": "#18181B",
+        "menu_text": "#FAFAFA",
+        "menu_active": "#3F3F46",
+        "navbar_background": "#27272A",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#27272A",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#F4F4F5",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Sky Blue": {
+        "primary": "#0369A1",
+        "accent": "#0EA5E9",
+        "background": "#F0F9FF",
+        "menu_background": "#075985",
+        "menu_text": "#F0F9FF",
+        "menu_active": "#0284C7",
+        "navbar_background": "#0369A1",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#0369A1",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#F0F9FF",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Charcoal Grey": {
+        "primary": "#374151",
+        "accent": "#6B7280",
+        "background": "#F3F4F6",
+        "menu_background": "#1F2937",
+        "menu_text": "#F9FAFB",
+        "menu_active": "#4B5563",
+        "navbar_background": "#374151",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#374151",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#F3F4F6",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Coffee Brown": {
+        "primary": "#713F12",
+        "accent": "#A16207",
+        "background": "#FAF6F0",
+        "menu_background": "#5C3317",
+        "menu_text": "#FFFBEB",
+        "menu_active": "#854D0E",
+        "navbar_background": "#713F12",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#713F12",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#FAF6F0",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    },
+    "Rose Pink": {
+        "primary": "#9D174D",
+        "accent": "#EC4899",
+        "background": "#FDF2F8",
+        "menu_background": "#831843",
+        "menu_text": "#FDF2F8",
+        "menu_active": "#BE185D",
+        "navbar_background": "#9D174D",
+        "navbar_text": "#FFFFFF",
+        "panel_background": "#FFFFFF",
+        "table_header_background": "#9D174D",
+        "table_header_text": "#FFFFFF",
+        "secondary_background": "#A58F7A",
+        "secondary_text": "#FFFFFF",
+        "row_hover_background": "#FDF2F8",
+        "row_border": "#CAD3C4",
+        "input_background": "#FFFFFF",
+        "input_border": "#A9B49F"
+    }
+};
     const boot = (frappe.boot && frappe.boot.c4style) || {};
     let theme = boot.site || {};
-    let personal = { menuCollapsed: false, workspaceWide: false, direction: "auto", ...(boot.personal || {}) };
+    let personal = { menuCollapsed: theme.menuDefaultCollapsed !== false, workspaceWide: false, direction: "auto", notes: [], ...(boot.personal || {}) };
     const originalDirection = document.documentElement.getAttribute("dir") || "ltr";
     const color = value => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
 
@@ -17,6 +342,10 @@
             accent: ["--secondary"], background: ["--bg-color"],
             menuBackground: ["--c4style-menu-bg"], menuText: ["--c4style-menu-text"],
             menuActive: ["--c4style-menu-active"],
+            secondaryBackground: ["--c4style-secondary-bg"], secondaryText: ["--c4style-secondary-text"],
+            rowHoverBackground: ["--c4style-row-hover"], rowBorder: ["--c4style-row-border"],
+            inputBackground: ["--c4style-input-bg"], inputBorder: ["--c4style-input-border"],
+            announcementBackground: ["--c4style-announcement-bg"], announcementColor: ["--c4style-announcement-text"],
         };
         Object.entries(variables).forEach(([key, names]) => {
             if (color(theme[key])) names.forEach(name => root.style.setProperty(name, theme[key]));
@@ -35,9 +364,17 @@
         const fonts = { system: 'system-ui, -apple-system, "Segoe UI", sans-serif', arial: 'Arial, sans-serif', tahoma: 'Tahoma, sans-serif', georgia: 'Georgia, serif' };
         root.style.setProperty("--c4style-font-family", fonts[theme.fontFamily] || fonts.system);
         document.body.classList.toggle("c4style-compact", theme.density === "compact");
+        ["headerStyle", "rowStyle", "inputBorderStyle", "fieldStyle", "buttonStyle", "shadowStyle", "menuBehavior"].forEach(key => {
+            const supported = {
+                headerStyle: ["pill", "flat"], rowStyle: ["separated", "flat"], inputBorderStyle: ["dashed", "solid", "none"],
+                fieldStyle: ["boxed", "underline"], buttonStyle: ["filled", "outline"], shadowStyle: ["soft", "none"], menuBehavior: ["hover", "click"],
+            };
+            if (supported[key].includes(theme[key])) document.body.dataset[key] = theme[key];
+        });
         applyPersonal();
         syncNavigation();
         refreshMenus();
+        if (frappe.c4style.sync_tools) frappe.c4style.sync_tools();
     }
 
     function applyPersonal() {
@@ -47,17 +384,23 @@
         document.documentElement.setAttribute("dir", personal.direction === "auto" ? siteDirection : personal.direction);
     }
 
+    let savingPersonal = false;
     function savePersonal(key, value) {
+        if (savingPersonal) return;
+        savingPersonal = true;
         const previous = personal[key];
         personal[key] = value;
         applyPersonal();
         refreshMenus();
-        document.querySelectorAll("[data-c4style-menu-controls] button").forEach(item => { item.disabled = true; });
+        document.querySelectorAll("[data-c4style-menu-controls] button, [data-c4style-personal-action]").forEach(item => { item.disabled = true; });
         frappe.call({
             method: "c4style.settings.save_settings", args: { settings: JSON.stringify({ [key]: value }) },
-            callback: () => frappe.show_alert({ message: __("Layout preference saved"), indicator: "green" }),
+            callback: () => {
+                if (frappe.c4style.sync_tools) frappe.c4style.sync_tools();
+                frappe.show_alert({ message: key === "notes" ? __("Notes saved") : __("Layout preference saved"), indicator: "green" });
+            },
             error: () => { personal[key] = previous; applyPersonal(); refreshMenus(); },
-            always: () => document.querySelectorAll("[data-c4style-menu-controls] button").forEach(item => { item.disabled = false; }),
+            always: () => { savingPersonal = false; document.querySelectorAll("[data-c4style-menu-controls] button, [data-c4style-personal-action]").forEach(item => { item.disabled = false; }); },
         });
     }
 
@@ -136,6 +479,13 @@
         const brand = document.createElement("a");
         brand.className = "c4style-brand";
         brand.href = "/app";
+        brand.title = __("Apps and workspaces");
+        brand.setAttribute("aria-label", __("Apps and workspaces"));
+        brand.addEventListener("click", event => {
+            if (!event.ctrlKey && !event.metaKey && !event.shiftKey && frappe.c4style.open_launcher) {
+                event.preventDefault(); frappe.c4style.open_launcher();
+            }
+        });
         const mark = document.createElement("span");
         mark.className = "c4style-brand-mark";
         mark.textContent = "C4";
@@ -229,7 +579,16 @@
         });
     }
 
-    frappe.c4style = { apply_theme: applyTheme };
+    const paletteFields = {
+        primary: "primary", accent: "accent", background: "background", menuBackground: "menu_background", menuText: "menu_text", menuActive: "menu_active",
+        navbarBackground: "navbar_background", navbarText: "navbar_text", panelBackground: "panel_background", tableHeaderBackground: "table_header_background", tableHeaderText: "table_header_text",
+        secondaryBackground: "secondary_background", secondaryText: "secondary_text", rowHoverBackground: "row_hover_background", rowBorder: "row_border", inputBackground: "input_background", inputBorder: "input_border",
+    };
+    frappe.c4style = {
+        apply_theme: applyTheme, palettes,
+        palette_settings: name => Object.fromEntries(Object.entries(paletteFields).map(([key, field]) => [key, palettes[name][field]])),
+        get_theme: () => ({ ...theme }), get_personal: () => ({ ...personal }), save_personal: savePersonal,
+    };
     // Keep bookmarks working while the native Single DocType enforces permissions.
     frappe.standard_pages = frappe.standard_pages || {};
     frappe.standard_pages["c4style-settings"] = () => {

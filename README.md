@@ -16,13 +16,21 @@ Add the css file in Website Settings, Header TAB:<br>
 
 #### Style settings
 
-Open **C4Style ? Style Settings** inside Desk, or search for **Style Settings**. The native Single DocType is available at `/app/style-settings`. Only **System Manager** and **Website Manager** can read and edit it. The header settings button has been removed.
+Open **C4Style > Style Settings** inside Desk, or search for **Style Settings**. The native Single DocType is available at `/app/style-settings`. Only **System Manager** and **Website Manager** can read and edit it. The header settings button has been removed.
 
-Choose a palette (C4Style, Ocean, Forest, Sunset, Lime Fresh, Wine) or set individual primary, accent, page, card, header, table header, menu, icon/text, and selected item colors. Text size, font family, corner roundness, spacing, default text direction, and the menu brand name are also configurable. The form includes a preview before saving. Save to apply the shared theme; other sessions receive changes after reloading. Previous personal color overrides no longer override the manager's theme. Styling applies to Frappe Desk.
+Choose one of 17 palettes or customize primary, accent, page, card, header, table, menu and text/icon colors. The Single DocType has Theme, Navigation, Components, Announcement and Preview tabs. Components include capsule/flat headers, separated/flat rows, dashed/solid/no input borders, boxed/underline fields, filled/outline buttons and optional shadows. Typography, spacing and direction are configurable. Save to apply the shared Desk theme; other sessions receive changes after reloading. Old personal color overrides no longer override the manager's theme.
 
-The optional persistent navigation menu remains available on workspace, list, and form pages. It builds links exclusively from Frappe's `allowed_workspaces` boot data, preserves private workspace routes and nested groups, and hides the duplicate workspace sidebar. Disable **Show workspace menu on every Desk page** to use the native workspace sidebar instead. Branding uses the existing Frappe app logo.
+The optional persistent navigation menu remains available on workspace, list, and form pages. It builds links exclusively from Frappe's `allowed_workspaces` boot data, preserves private workspace routes and nested groups, and hides the duplicate workspace sidebar. New users start with an icon-only menu by default. Optional hover/focus expansion keeps their saved width preference. Disable **Show workspace menu on every Desk page** to restore the native workspace sidebar. The existing app logo opens a searchable workspace launcher.
 
 Every signed-in Desk user can use the arrows in the menu to switch between a full menu with icons and labels and a narrow menu with icons only, or expand/narrow the workspace. Links keep tooltips and accessible labels in narrow mode. A third button switches text direction between RTL and LTR and moves the menu to match. These preferences save separately for each account and do not grant access to theme settings. Mobile navigation uses a horizontally scrollable layout; it is omitted from print output.
+
+The floating **Appearance tools** button offers personal layout controls, a searchable app launcher and private colored sticky notes. Save notes, then choose **Pin saved notes** for draggable/resizable windows with keyboard movement. Note text/colors persist per account; pinned window positions last for the page session. Managers also get a shared palette chooser with confirmation and a link to Style Settings. The header has no added settings button.
+
+Configure the scrolling plain-text announcement in its own tab. Users can dismiss it for the page session. Navigation settings control scroll-to-top/bottom buttons and native notification/user side drawers. Animation respects reduced-motion preferences.
+
+List views offer **Group loaded rows** for supported columns. Counts refer to currently loaded records. Filtering, sorting, selection and permissions remain managed by Frappe.
+
+See [the video comparison](docs/video-reference-review.md) for implemented features, remaining differences and the synthetic layout preview.
 
 After deploying the updated code, run these commands from the bench directory (replace `your-site` with your site name):
 

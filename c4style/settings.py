@@ -11,7 +11,15 @@ DEFAULTS = dict(primary='#714B67', accent='#017E84', background='#E5E8EB',
                 menuText='#36414C', menuActive='#E5F1F1',
                 navbarBackground='#714B67', navbarText='#FFFFFF', panelBackground='#FFFFFF',
                 tableHeaderBackground='#714B67', tableHeaderText='#FFFFFF',
-                fontFamily='system', textDirection='auto', persistentMenu=True, brandName='C4Style')
+                fontFamily='system', textDirection='auto', persistentMenu=True, brandName='C4Style',
+                headerStyle='pill', rowStyle='separated', inputBorderStyle='dashed',
+                fieldStyle='boxed', buttonStyle='filled', shadowStyle='soft', menuBehavior='hover',
+                secondaryBackground='#A58F7A', secondaryText='#FFFFFF',
+                rowHoverBackground='#F1F6ED', rowBorder='#CAD3C4',
+                inputBackground='#FFFFFF', inputBorder='#A9B49F',
+                menuDefaultCollapsed=True, showScrollButtons=True, nativeDrawers=True,
+                enableAnnouncement=False, announcementText='', announcementSpeed=24,
+                announcementBackground='#F0EDF7', announcementColor='#36414C', notes=[])
 
 
 def validate(settings):
@@ -23,10 +31,12 @@ def validate(settings):
         valid = False
         if key in ('primary', 'accent', 'background', 'menuBackground', 'menuText', 'menuActive',
                    'navbarBackground', 'navbarText', 'panelBackground',
-                   'tableHeaderBackground', 'tableHeaderText'):
+                   'tableHeaderBackground', 'tableHeaderText', 'secondaryBackground', 'secondaryText',
+                   'rowHoverBackground', 'rowBorder', 'inputBackground', 'inputBorder',
+                   'announcementBackground', 'announcementColor'):
             valid = isinstance(value, str) and re.fullmatch(r'#[0-9a-fA-F]{6}', value)
-        elif key in ('fontSize', 'radius'):
-            low, high = (12, 18) if key == 'fontSize' else (2, 16)
+        elif key in ('fontSize', 'radius', 'announcementSpeed'):
+            low, high = {'fontSize': (12, 18), 'radius': (2, 16), 'announcementSpeed': (5, 120)}[key]
             valid = type(value) in (int, float) and math.isfinite(value) and low <= value <= high
         elif key == 'density':
             valid = value in ('compact', 'comfortable')
@@ -36,7 +46,26 @@ def validate(settings):
             valid = value in ('system', 'arial', 'tahoma', 'georgia')
         elif key == 'brandName':
             valid = isinstance(value, str) and 1 <= len(value.strip()) <= 80
-        elif key in ('workspaceWide', 'menuCollapsed', 'persistentMenu'):
+        elif key in ('headerStyle', 'rowStyle', 'inputBorderStyle', 'fieldStyle', 'buttonStyle', 'shadowStyle', 'menuBehavior'):
+            valid = value in {
+                'headerStyle': ('pill', 'flat'), 'rowStyle': ('separated', 'flat'),
+                'inputBorderStyle': ('dashed', 'solid', 'none'), 'fieldStyle': ('boxed', 'underline'),
+                'buttonStyle': ('filled', 'outline'), 'shadowStyle': ('soft', 'none'),
+                'menuBehavior': ('hover', 'click'),
+            }[key]
+        elif key == 'announcementText':
+            valid = isinstance(value, str) and len(value) <= 1000
+        elif key == 'notes':
+            valid = isinstance(value, list) and len(value) <= 20 and all(
+                isinstance(note, dict) and set(note) == {'id', 'text', 'color'}
+                and isinstance(note['id'], str) and 1 <= len(note['id']) <= 80
+                and isinstance(note['text'], str) and len(note['text']) <= 4000
+                and note['color'] in ('mint', 'sun', 'rose', 'sky') for note in value
+            )
+            if valid:
+                valid = len({note['id'] for note in value}) == len(value) and len(json.dumps(value).encode('utf-8')) <= 48000
+        elif key in ('workspaceWide', 'menuCollapsed', 'persistentMenu', 'menuDefaultCollapsed',
+                     'showScrollButtons', 'nativeDrawers', 'enableAnnouncement'):
             valid = type(value) is bool
         if not valid:
             frappe.throw('Invalid style setting: ' + key)
@@ -61,15 +90,25 @@ SITE_FIELDS = dict(primary='primary', accent='accent', background='background',
                    navbarBackground='navbar_background', navbarText='navbar_text',
                    panelBackground='panel_background', tableHeaderBackground='table_header_background',
                    tableHeaderText='table_header_text', fontFamily='font_family',
-                   textDirection='text_direction', persistentMenu='persistent_menu', brandName='brand_name')
-PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed'}
+                   textDirection='text_direction', persistentMenu='persistent_menu', brandName='brand_name',
+                   headerStyle='header_style', rowStyle='row_style', inputBorderStyle='input_border_style',
+                   fieldStyle='field_style', buttonStyle='button_style', shadowStyle='shadow_style',
+                   menuBehavior='menu_behavior', secondaryBackground='secondary_background',
+                   secondaryText='secondary_text', rowHoverBackground='row_hover_background',
+                   rowBorder='row_border', inputBackground='input_background', inputBorder='input_border',
+                   menuDefaultCollapsed='menu_default_collapsed', showScrollButtons='show_scroll_buttons',
+                   nativeDrawers='native_drawers', enableAnnouncement='enable_announcement',
+                   announcementText='announcement_text', announcementSpeed='announcement_speed',
+                   announcementBackground='announcement_background', announcementColor='announcement_color')
+PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed', 'notes'}
 
 
 def document_settings(doc):
     values = {key: doc.get(field) if doc.get(field) is not None else DEFAULTS[key]
               for key, field in SITE_FIELDS.items()}
-    if values['persistentMenu'] in (0, 1):
-        values['persistentMenu'] = bool(values['persistentMenu'])
+    for key in ('persistentMenu', 'menuDefaultCollapsed', 'showScrollButtons', 'nativeDrawers', 'enableAnnouncement'):
+        if values[key] in (0, 1):
+            values[key] = bool(values[key])
     return values
 
 
@@ -92,7 +131,7 @@ def get_settings():
 
 
 @frappe.whitelist(methods=['POST'])
-def save_settings(settings, scope='personal'):
+def save_settings(settings, scope='personal', palette=None):
     if frappe.session.user == 'Guest':
         frappe.throw('Please sign in', frappe.PermissionError)
     if scope not in ('personal', 'site'):
@@ -103,13 +142,18 @@ def save_settings(settings, scope='personal'):
     if scope == 'site':
         doc = frappe.get_single('Style Settings')
         doc.check_permission('write')
+        if palette is not None:
+            choices = doc.meta.get_field('palette').options.split('\n')
+            if not isinstance(palette, str) or palette not in choices:
+                frappe.throw('Invalid palette')
+            doc.set('palette', palette)
         for key, value in values.items():
             if key in SITE_FIELDS:
                 doc.set(SITE_FIELDS[key], value)
         doc.save()
         return document_settings(doc)
     if set(values) - PERSONAL_FIELDS:
-        frappe.throw('Personal preferences may only change menu width, workspace width and text direction', frappe.PermissionError)
+        frappe.throw('Personal preferences may only change menu width, workspace width, text direction and personal notes', frappe.PermissionError)
     # Merge partial menu updates without discarding other account preferences.
     current = {k: v for k, v in read_settings(frappe.session.user).items() if k in PERSONAL_FIELDS}
     current.update(values)

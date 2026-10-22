@@ -5,6 +5,7 @@
  "issingle": 1,
  "track_changes": 1,
  "field_order": [
+  "theme_tab",
   "colors_section",
   "palette",
   "primary",
@@ -24,15 +25,44 @@
   "panel_background",
   "table_header_background",
   "table_header_text",
+  "navigation_tab",
   "navigation_section",
   "brand_name",
   "persistent_menu",
   "font_family",
   "text_direction",
-  "preview_section",
+  "menu_default_collapsed",
+  "menu_behavior",
+  "show_scroll_buttons",
+  "native_drawers",
+  "component_tab",
+  "header_style",
+  "row_style",
+  "input_border_style",
+  "field_style",
+  "button_style",
+  "shadow_style",
+  "secondary_background",
+  "secondary_text",
+  "row_hover_background",
+  "row_border",
+  "input_background",
+  "input_border",
+  "announcement_tab",
+  "enable_announcement",
+  "announcement_text",
+  "announcement_speed",
+  "announcement_background",
+  "announcement_color",
+  "preview_tab",
   "theme_preview"
  ],
  "fields": [
+  {
+   "fieldname": "theme_tab",
+   "fieldtype": "Tab Break",
+   "label": "Theme"
+  },
   {
    "fieldname": "colors_section",
    "fieldtype": "Section Break",
@@ -42,7 +72,7 @@
    "fieldname": "palette",
    "fieldtype": "Select",
    "label": "Color palette",
-   "options": "C4Style\nOcean\nForest\nSunset\nLime Fresh\nWine\nCustom",
+   "options": "C4Style\nOcean\nForest\nSunset\nLime Fresh\nWine\nCrimson Red\nOcean Teal\nBurnt Orange\nIndigo Night\nDark Green\nRoyal Purple\nJet Black\nSky Blue\nCharcoal Grey\nCoffee Brown\nRose Pink\nCustom",
    "default": "C4Style"
   },
   {
@@ -160,6 +190,11 @@
    "reqd": 1
   },
   {
+   "fieldname": "navigation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Navigation"
+  },
+  {
    "fieldname": "navigation_section",
    "fieldtype": "Section Break",
    "label": "Navigation and typography"
@@ -195,8 +230,168 @@
    "reqd": 1
   },
   {
-   "fieldname": "preview_section",
-   "fieldtype": "Section Break",
+   "fieldname": "menu_default_collapsed",
+   "fieldtype": "Check",
+   "label": "Start new users with an icon-only menu",
+   "default": "1"
+  },
+  {
+   "fieldname": "menu_behavior",
+   "fieldtype": "Select",
+   "label": "Collapsed menu behavior",
+   "default": "hover",
+   "options": "hover\nclick",
+   "reqd": 1
+  },
+  {
+   "fieldname": "show_scroll_buttons",
+   "fieldtype": "Check",
+   "label": "Show scroll to top and bottom buttons",
+   "default": "1"
+  },
+  {
+   "fieldname": "native_drawers",
+   "fieldtype": "Check",
+   "label": "Show notifications and user menu as side drawers",
+   "default": "1"
+  },
+  {
+   "fieldname": "component_tab",
+   "fieldtype": "Tab Break",
+   "label": "Components"
+  },
+  {
+   "fieldname": "header_style",
+   "fieldtype": "Select",
+   "label": "Header style",
+   "options": "pill\nflat",
+   "reqd": 1,
+   "default": "pill"
+  },
+  {
+   "fieldname": "row_style",
+   "fieldtype": "Select",
+   "label": "List row style",
+   "options": "separated\nflat",
+   "reqd": 1,
+   "default": "separated"
+  },
+  {
+   "fieldname": "input_border_style",
+   "fieldtype": "Select",
+   "label": "Input border style",
+   "options": "dashed\nsolid\nnone",
+   "reqd": 1,
+   "default": "dashed"
+  },
+  {
+   "fieldname": "field_style",
+   "fieldtype": "Select",
+   "label": "Form field style",
+   "options": "boxed\nunderline",
+   "reqd": 1,
+   "default": "boxed"
+  },
+  {
+   "fieldname": "button_style",
+   "fieldtype": "Select",
+   "label": "Secondary button style",
+   "options": "filled\noutline",
+   "reqd": 1,
+   "default": "filled"
+  },
+  {
+   "fieldname": "shadow_style",
+   "fieldtype": "Select",
+   "label": "Shadows",
+   "options": "soft\nnone",
+   "reqd": 1,
+   "default": "soft"
+  },
+  {
+   "fieldname": "secondary_background",
+   "fieldtype": "Color",
+   "label": "Secondary action background",
+   "reqd": 1,
+   "default": "#A58F7A"
+  },
+  {
+   "fieldname": "secondary_text",
+   "fieldtype": "Color",
+   "label": "Secondary action text",
+   "reqd": 1,
+   "default": "#FFFFFF"
+  },
+  {
+   "fieldname": "row_hover_background",
+   "fieldtype": "Color",
+   "label": "Hovered row background",
+   "reqd": 1,
+   "default": "#F1F6ED"
+  },
+  {
+   "fieldname": "row_border",
+   "fieldtype": "Color",
+   "label": "List row border",
+   "reqd": 1,
+   "default": "#CAD3C4"
+  },
+  {
+   "fieldname": "input_background",
+   "fieldtype": "Color",
+   "label": "Input background",
+   "reqd": 1,
+   "default": "#FFFFFF"
+  },
+  {
+   "fieldname": "input_border",
+   "fieldtype": "Color",
+   "label": "Input border color",
+   "reqd": 1,
+   "default": "#A9B49F"
+  },
+  {
+   "fieldname": "announcement_tab",
+   "fieldtype": "Tab Break",
+   "label": "Announcement"
+  },
+  {
+   "fieldname": "enable_announcement",
+   "fieldtype": "Check",
+   "label": "Show scrolling announcement",
+   "default": "0"
+  },
+  {
+   "fieldname": "announcement_text",
+   "fieldtype": "Small Text",
+   "label": "Announcement text",
+   "description": "Plain text only. Users can dismiss this message for the current page session.",
+   "default": ""
+  },
+  {
+   "fieldname": "announcement_speed",
+   "fieldtype": "Int",
+   "label": "Scroll duration (5 to 120 seconds)",
+   "reqd": 1,
+   "default": 24
+  },
+  {
+   "fieldname": "announcement_background",
+   "fieldtype": "Color",
+   "label": "Announcement background",
+   "reqd": 1,
+   "default": "#F0EDF7"
+  },
+  {
+   "fieldname": "announcement_color",
+   "fieldtype": "Color",
+   "label": "Announcement text color",
+   "reqd": 1,
+   "default": "#36414C"
+  },
+  {
+   "fieldname": "preview_tab",
+   "fieldtype": "Tab Break",
    "label": "Preview"
   },
   {

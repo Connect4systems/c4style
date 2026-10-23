@@ -242,3 +242,4 @@ extend_bootinfo = "c4style.settings.boot_session"
 # Remove retired workflow notification controls from existing installations.
 after_migrate = "c4style.remove_workflow_notifications.execute"
 after_install = "c4style.install_palettes.execute"
+doctype_list_js = {"Notification Log": "public/js/notification_log_list.js"}

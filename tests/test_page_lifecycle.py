@@ -532,6 +532,25 @@ class MenuTests(unittest.TestCase):
         self.page.locator('#sort-column').click()
         self.assertTrue(self.page.evaluate('sorted'))
 
+    def test_notification_list_delete_asks_confirmation_and_refreshes(self):
+        self.page.evaluate('''()=>{
+            frappe.listview_settings={'Notification Log':{onload:()=>{window.originalLoaded=true;}}};
+            window.listview={page:{add_action_item:(label,action)=>{window.deleteAction=action;}},
+                get_checked_items:()=>[{name:'alert-one'},{name:'alert-two'}],
+                refresh:()=>{window.listRefreshed=true;}};
+            frappe.confirm=(text,callback)=>{window.confirmDelete=callback;};
+            frappe.call=options=>{window.deleteRequest=options;options.callback({message:{deleted:2}});};
+            frappe.c4style.refresh_notifications=()=>{window.badgeRefreshed=true;};
+        }''')
+        self.page.add_script_tag(content=(ROOT/'c4style/public/js/notification_log_list.js').read_text())
+        self.page.evaluate("frappe.listview_settings['Notification Log'].onload(listview);deleteAction()")
+        self.assertTrue(self.page.evaluate('originalLoaded'))
+        self.assertFalse(self.page.evaluate('Boolean(window.deleteRequest)'))
+        self.page.evaluate('confirmDelete()')
+        self.assertEqual(self.page.evaluate('deleteRequest.method'),'c4style.notifications.delete_notifications')
+        self.assertEqual(self.page.evaluate('JSON.parse(deleteRequest.args.names)'),['alert-one','alert-two'])
+        self.assertTrue(self.page.evaluate('listRefreshed && badgeRefreshed'))
+
     def test_grouping_loaded_rows_preserves_links_selection_and_ungroup_order(self):
         self.page.evaluate('''() => {
             const result=document.createElement('div');result.id='group-result';

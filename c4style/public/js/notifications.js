@@ -117,6 +117,7 @@
         frappe.realtime.on('notification', () => refresh(true));
         frappe.realtime.on('indicator_hide', () => refresh(false));
     }
+    api.refresh_notifications = () => refresh(false);
     function start() {
         installRealtime(); refresh(); syncBadge();
         if (window.jQuery) {

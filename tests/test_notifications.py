@@ -26,6 +26,9 @@ class NotificationTests(unittest.TestCase):
         fake.session.user='user@example.com'
         fake.db.count.reset_mock();fake.get_all.reset_mock()
         fake.get_all.return_value=[{'name':'note-one','subject':'<b>Reminder</b>'}]
+        fake.parse_json=__import__('json').loads
+        fake.get_doc=Mock(return_value=types.SimpleNamespace(for_user=fake.session.user))
+        fake.delete_doc=Mock()
     def test_summary_has_exact_count_and_session_recipient_filters(self):
         result=notifications.get_notifications()
         self.assertEqual(result,{'unread_count':37,'notifications':[{'name':'note-one','subject':'Reminder','creation':''}]})
@@ -39,5 +42,25 @@ class NotificationTests(unittest.TestCase):
         fake.session.user='Administrator'
         notifications.get_notifications()
         self.assertEqual(fake.get_all.call_args.kwargs['filters']['for_user'],'Administrator')
+
+    def test_delete_only_selected_own_notifications_and_deduplicate(self):
+        self.assertEqual(notifications.delete_notifications('["one","two","one"]'), {'deleted':2})
+        self.assertEqual([call.args for call in fake.delete_doc.call_args_list],
+            [('Notification Log','one'),('Notification Log','two')])
+        self.assertTrue(all(call.kwargs['for_update'] for call in fake.get_doc.call_args_list))
+
+    def test_mixed_ownership_selection_deletes_nothing(self):
+        fake.get_doc.side_effect=[types.SimpleNamespace(for_user=fake.session.user),
+                                  types.SimpleNamespace(for_user='another@example.com')]
+        with self.assertRaises(PermissionError): notifications.delete_notifications(['own','other'])
+        fake.delete_doc.assert_not_called()
+
+    def test_guest_and_invalid_deletions_are_rejected(self):
+        for names in ([], {}, [''], [1], ['one']*501):
+            with self.assertRaises(PermissionError): notifications.delete_notifications(names)
+        fake.session.user='Guest'
+        with self.assertRaises(PermissionError): notifications.delete_notifications(['one'])
+        fake.get_doc.assert_not_called()
+        fake.delete_doc.assert_not_called()
 
 if __name__=='__main__':unittest.main()

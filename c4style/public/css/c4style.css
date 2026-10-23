@@ -692,11 +692,14 @@ body[data-row-style="separated"] .list-row-container .list-row-border { display:
     margin-block-end: 12px;
 }
 body[data-row-style="separated"] .frappe-list .list-row-head {
-    z-index: 20;
+    z-index: 1;
     border-radius: var(--c4style-radius);
     min-height: 34px;
     padding-inline: 12px;
 }
+/* Page actions must paint above the list heading and selected-row count. */
+.page-head { z-index: 1020; }
+.page-head .actions-btn-group .dropdown-menu { z-index: 1021; }
 body[data-input-border-style] .form-control {
     background: var(--c4style-input-bg) !important;
     border-color: var(--c4style-input-border) !important;

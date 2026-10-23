@@ -12,6 +12,21 @@ _active_transition = ContextVar('c4style_active_transition', default=None)
 _active_bulk_action = ContextVar('c4style_bulk_action', default=None)
 
 
+def _schema_ready():
+    """Hooks can run before this app's installer during another app's migration.
+
+    Check physical columns, not just Custom Field metadata. Do not memoize a
+    missing schema: the installer may finish later in this same process.
+    """
+    return (frappe.db.has_column('Notification', 'c4style_transition_key')
+            and frappe.db.has_column('Workflow Transition', 'c4style_notification'))
+
+
+def _require_schema():
+    if not _schema_ready():
+        frappe.throw('Workflow notification fields are not installed yet. Run the C4Style field installer and site migration.')
+
+
 def _key(workflow, transition):
     return sha256((workflow + '\0' + transition).encode()).hexdigest()
 
@@ -38,6 +53,7 @@ def _defaults(workflow, row):
 def prepare_notification(workflow, transition):
     if frappe.session.user == 'Guest':
         frappe.throw('Please sign in', frappe.PermissionError)
+    _require_schema()
     workflow = frappe.get_doc('Workflow', workflow)
     workflow.check_permission('write')
     row = _row(workflow, transition)
@@ -57,6 +73,10 @@ def prepare_notification(workflow, transition):
 def validate_notification(doc, method=None):
     workflow_name = doc.get('c4style_workflow')
     transition = doc.get('c4style_transition')
+    if not _schema_ready():
+        if workflow_name or transition:
+            _require_schema()
+        return
     if not workflow_name and not transition:
         doc.set('c4style_transition_key', None)
         return
@@ -76,7 +96,7 @@ def validate_notification(doc, method=None):
 
 
 def link_notification(doc, method=None):
-    if not doc.get('c4style_workflow'):
+    if not doc.get('c4style_workflow') or not _schema_ready():
         return
     frappe.db.set_value('Workflow Transition', doc.c4style_transition,
                         'c4style_notification', doc.name, update_modified=False)
@@ -84,6 +104,8 @@ def link_notification(doc, method=None):
 
 
 def unlink_notification(doc, method=None):
+    if not _schema_ready():
+        return
     if doc.get('c4style_transition') and frappe.db.get_value(
             'Workflow Transition', doc.c4style_transition, 'c4style_notification') == doc.name:
         frappe.db.set_value('Workflow Transition', doc.c4style_transition,
@@ -93,6 +115,8 @@ def unlink_notification(doc, method=None):
 
 def sync_workflow_notifications(doc, method=None):
     """Keep generated routing in step with edits to the Workflow rows."""
+    if not _schema_ready():
+        return
     for row in doc.transitions:
         name = frappe.db.get_value('Notification', {'c4style_transition_key': _key(doc.name, row.name)}, 'name')
         if name:
@@ -151,7 +175,7 @@ def capture_transition(doc, method=None):
     from frappe.model.workflow import get_transitions, get_workflow, get_workflow_name, has_approval_access
 
     doc.flags.c4style_transition_notification = None
-    if doc.is_new() or not get_workflow_name(doc.doctype):
+    if doc.is_new() or not _schema_ready() or not get_workflow_name(doc.doctype):
         return
     workflow = get_workflow(doc.doctype)
     if not workflow.is_active:
@@ -206,7 +230,7 @@ def _recipients(doc, allowed_role):
 
 def deliver_transition(doc, method=None):
     pending = doc.flags.get('c4style_transition_notification')
-    if not pending or pending.get('delivered'):
+    if not pending or pending.get('delivered') or not _schema_ready():
         return
     rule = frappe.get_doc('Notification', pending['notification'])
     if (not rule.enabled or rule.channel != 'System Notification' or rule.event != 'Custom'

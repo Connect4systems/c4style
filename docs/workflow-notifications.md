@@ -48,3 +48,21 @@ After deploying/migrating, use a dedicated test document and Workflow:
 3. Execute the action as an eligible user; check exactly one log per permitted recipient, including an owner who also holds the role.
 4. Repeat with a false condition, disabled rule, disabled recipient and a role user without document read access. Confirm no unintended logs appear.
 5. Exercise bulk transitions and a submitted-document transition on the target Frappe version. Verify that a failed transaction creates no committed notification.
+
+
+## Recovery: migration runs another app's Workflow setup first
+
+Some sites have an earlier app whose `after_migrate` hook saves a Workflow before C4Style's field installer runs. Previously, that save queried `Notification.c4style_transition_key` before its database column existed, causing MariaDB error 1054. Workflow hooks now check the physical Notification and Workflow Transition columns before accessing extension fields. Ordinary Workflow saves and unrelated Notifications remain usable until installation completes; explicit rule setup reports a migration message if the schema is missing. Missing-schema results are not memoized by C4Style, so the hooks become active once installation finishes in the same process.
+
+After deploying this fix, an interrupted installation can be repaired with the idempotent installer before retrying migration:
+
+```sh
+cd ~/frappe-bench
+bench --site your-site execute c4style.install_workflow_notifications.install
+bench --site your-site migrate
+bench build --app c4style
+bench --site your-site clear-cache
+bench restart
+```
+
+Regression checks cover another app saving a Workflow before the field exists, partially installed columns, activation after installation in the same process, and normal Notification saves while the extension schema is absent.

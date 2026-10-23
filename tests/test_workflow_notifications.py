@@ -25,7 +25,7 @@ class WorkflowNotificationTests(unittest.TestCase):
         self.frappe.session=Attr(user='actor@example.com');self.frappe.PermissionError=PermissionError
         def throw(message,exc=ValueError):raise exc(message)
         self.frappe.throw=throw;self.frappe.parse_json=lambda value:__import__('json').loads(value)
-        self.frappe.db=Attr(get_value=Mock(side_effect=lambda doctype,filters,field: 'Rule 1' if self.existing else None),set_value=Mock())
+        self.frappe.db=Attr(has_column=Mock(return_value=True),get_value=Mock(side_effect=lambda doctype,filters,field: 'Rule 1' if self.existing else None),set_value=Mock())
         self.frappe.clear_document_cache=Mock();self.frappe.log_error=Mock()
         self.frappe.enqueue=Mock();self.frappe.msgprint=Mock()
         self.frappe.has_permission=Mock(side_effect=lambda *args,**kwargs:kwargs.get('user')!='denied@example.com')
@@ -175,5 +175,38 @@ class WorkflowNotificationTests(unittest.TestCase):
             self.assertEqual(hooks[event],'c4style.workflow_notifications.capture_transition')
         for event in ('on_update','on_submit','on_cancel','on_update_after_submit'):
             self.assertEqual(hooks[event],'c4style.workflow_notifications.deliver_transition')
+
+    def test_workflow_save_before_installer_never_queries_missing_columns(self):
+        self.frappe.db.has_column.return_value=False
+        self.frappe.db.get_value.side_effect=AssertionError('Must not query uninstalled custom fields')
+        self.module.sync_workflow_notifications(self.workflow)
+        self.module.capture_transition(self.after)
+        self.assertIsNone(self.after.flags.c4style_transition_notification)
+        self.after.flags.c4style_transition_notification={'notification':'Rule 1'}
+        self.module.deliver_transition(self.after)
+        self.module.link_notification(self.rule)
+        self.module.unlink_notification(self.rule)
+        self.frappe.db.get_value.assert_not_called()
+        self.frappe.db.set_value.assert_not_called()
+        self.assertEqual(self.logs,[])
+
+    def test_partial_schema_stays_inactive_then_activates_in_the_same_process(self):
+        columns={('Notification','c4style_transition_key')}
+        self.frappe.db.has_column.side_effect=lambda doctype,field:(doctype,field) in columns
+        object.__setattr__(self.rule,'save',Mock())
+        self.module.sync_workflow_notifications(self.workflow)
+        self.frappe.db.get_value.assert_not_called()
+        columns.add(('Workflow Transition','c4style_notification'))
+        self.module.sync_workflow_notifications(self.workflow)
+        self.rule.save.assert_called_once_with(ignore_permissions=True)
+
+    def test_missing_schema_allows_normal_notifications_and_explains_workflow_rule_setup(self):
+        self.frappe.db.has_column.return_value=False
+        self.module.validate_notification(Attr(name='Normal notification'))
+        with self.assertRaisesRegex(ValueError,'fields are not installed'):
+            self.module.validate_notification(self.rule)
+        with self.assertRaisesRegex(ValueError,'fields are not installed'):
+            self.module.prepare_notification(self.workflow.name,self.row.name)
+        self.frappe.db.get_value.assert_not_called()
 
 if __name__=='__main__':unittest.main()

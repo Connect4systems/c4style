@@ -3,8 +3,6 @@
     const api = frappe.c4style;
     if (!api) return;
     let dismissedAnnouncement = null;
-    let pinnedNotes = false;
-    const dismissedNotes = new Set();
     const notePositions = new Map();
     const observedDropdowns = new WeakSet();
     const allowedWorkspaces = () => ((frappe.boot && frappe.boot.allowed_workspaces) || []).filter(item => !item.is_hidden);
@@ -85,10 +83,18 @@
             body.append(explanation, grid);
         });
     }
+    function saveNote(note, onSaved) {
+        const notes = api.get_personal().notes || [];
+        const exists = notes.some(item => item.id === note.id);
+        api.save_personal("notes", exists ? notes.map(item => item.id === note.id ? { ...note } : item) : [...notes, { ...note }], onSaved);
+    }
+    function deleteNote(id, onSaved) {
+        api.save_personal("notes", (api.get_personal().notes || []).filter(item => item.id !== id), onSaved);
+    }
     function openNotes() {
         let draft = (api.get_personal().notes || []).map(note => ({ ...note }));
-        dialog("My sticky notes", (body, element) => {
-            const hint = document.createElement("p"); hint.textContent = __("Private to your account. Save your notes to keep them across browsers.");
+        dialog("My sticky notes", body => {
+            const hint = document.createElement("p"); hint.textContent = __("Private to your account. Saved notes return automatically after refresh. Minimize keeps a note; Delete removes it.");
             const list = document.createElement("div"); list.className = "c4style-notes-grid";
             function render() {
                 list.replaceChildren();
@@ -99,8 +105,25 @@
                     const color = document.createElement("select"); color.className = "form-control"; color.setAttribute("aria-label", __("Note color"));
                     ["mint", "sun", "rose", "sky"].forEach(value => color.add(new Option(__(value), value)));
                     color.value = note.color; color.addEventListener("change", () => { note.color = color.value; card.dataset.color = note.color; });
-                    const remove = button("Delete note", () => { draft = draft.filter(item => item.id !== note.id); render(); }, "btn btn-default btn-sm");
-                    card.append(text, color, remove); list.appendChild(card);
+                    const save = button("Save", () => saveNote(note), "btn btn-default btn-sm"); save.setAttribute("aria-label", __("Save note"));
+                    const minimize = button(note.minimized ? "Restore" : "Minimize", () => {
+                        const minimized = !note.minimized;
+                        const saved = (api.get_personal().notes || []).find(item => item.id === note.id);
+                        const update = () => { note.minimized = minimized; render(); };
+                        if (saved) saveNote({ ...saved, minimized }, update);
+                        else update();
+                    }, "btn btn-default btn-sm");
+                    minimize.setAttribute("aria-expanded", String(!note.minimized));
+                    const remove = button("Delete", () => {
+                        const saved = (api.get_personal().notes || []).some(item => item.id === note.id);
+                        const update = () => { draft = draft.filter(item => item.id !== note.id); render(); };
+                        if (saved) deleteNote(note.id, update);
+                        else update();
+                    }, "btn btn-default btn-sm"); remove.setAttribute("aria-label", __("Delete note"));
+                    [save, minimize, remove].forEach(control => { control.dataset.c4stylePersonalAction = "true"; });
+                    const actions = document.createElement("div"); actions.className = "c4style-note-actions"; actions.append(save, minimize, remove);
+                    text.hidden = color.hidden = !!note.minimized;
+                    card.append(text, color, actions); list.appendChild(card);
                 });
             }
             const add = button("Add note", () => {
@@ -109,18 +132,12 @@
             });
             const save = button("Save notes", () => api.save_personal("notes", draft.map(note => ({ ...note }))), "btn btn-primary");
             save.dataset.c4stylePersonalAction = "true";
-            const pin = button("Pin saved notes", () => {
-                if (!(api.get_personal().notes || []).length) {
-                    frappe.show_alert({ message: __("Save a note first"), indicator: "orange" }); return;
-                }
-                pinnedNotes = true; dismissedNotes.clear(); element.close(); syncPinnedNotes();
-            });
-            const actions = document.createElement("div"); actions.className = "c4style-tools-actions"; actions.append(add, save, pin);
+            const actions = document.createElement("div"); actions.className = "c4style-tools-actions"; actions.append(add, save);
             body.append(hint, list, actions); render();
         });
     }
     function syncPinnedNotes() {
-        const notes = pinnedNotes ? (api.get_personal().notes || []).filter(note => !dismissedNotes.has(note.id)) : [];
+        const notes = api.get_personal().notes || [];
         document.querySelectorAll(".c4style-note-window").forEach(card => {
             if (!notes.some(note => note.id === card.dataset.noteId)) card.remove();
         });
@@ -129,7 +146,14 @@
             if (card) {
                 const text = card.querySelector("textarea");
                 if (text.value === card.dataset.savedText) text.value = note.text;
-                card.dataset.savedText = note.text; card.dataset.color = note.color; return;
+                card.dataset.savedText = note.text; card.dataset.color = note.color;
+                card.classList.toggle("c4style-note-minimized", !!note.minimized);
+                text.hidden = !!note.minimized;
+                const minimize = card.querySelector("[data-note-minimize]");
+                const minimizeLabel = __(note.minimized ? "Restore" : "Minimize");
+                if (minimize.textContent !== minimizeLabel) minimize.textContent = minimizeLabel;
+                minimize.setAttribute("aria-expanded", String(!note.minimized));
+                return;
             }
             card = document.createElement("section"); card.className = "c4style-note c4style-note-window";
             card.dataset.noteId = note.id; card.dataset.color = note.color; card.dataset.savedText = note.text;
@@ -137,12 +161,25 @@
             const header = document.createElement("div"); header.className = "c4style-note-move";
             const title = document.createElement("strong"); title.textContent = __("My note");
             title.tabIndex = 0; title.setAttribute("role", "button"); title.setAttribute("aria-label", __("Move note with arrow keys or drag"));
-            const close = button("\u00d7", () => { dismissedNotes.add(note.id); card.remove(); }, "btn btn-default btn-sm");
-            close.setAttribute("aria-label", __("Hide pinned note")); header.append(title, close);
+            header.append(title);
             const text = document.createElement("textarea"); text.className = "form-control"; text.value = note.text; text.maxLength = 4000;
             text.setAttribute("aria-label", __("Pinned note text"));
-            const save = button("Save note", () => api.save_personal("notes", (api.get_personal().notes || []).map(item => item.id === note.id ? { ...item, text: text.value } : item)), "btn btn-default btn-sm");
-            save.dataset.c4stylePersonalAction = "true"; card.append(header, text, save); document.body.appendChild(card);
+            const save = button("Save", () => {
+                const saved = (api.get_personal().notes || []).find(item => item.id === note.id);
+                if (saved) saveNote({ ...saved, text: text.value });
+            }, "btn btn-default btn-sm");
+            save.setAttribute("aria-label", __("Save note"));
+            const minimize = button(note.minimized ? "Restore" : "Minimize", () => {
+                const saved = (api.get_personal().notes || []).find(item => item.id === note.id);
+                if (saved) saveNote({ ...saved, minimized: !saved.minimized });
+            }, "btn btn-default btn-sm");
+            minimize.dataset.noteMinimize = "true"; minimize.setAttribute("aria-expanded", String(!note.minimized));
+            const remove = button("Delete", () => deleteNote(note.id), "btn btn-default btn-sm");
+            remove.setAttribute("aria-label", __("Delete note"));
+            [save, minimize, remove].forEach(control => { control.dataset.c4stylePersonalAction = "true"; });
+            const actions = document.createElement("div"); actions.className = "c4style-note-actions"; actions.append(save, minimize, remove);
+            card.classList.toggle("c4style-note-minimized", !!note.minimized); text.hidden = !!note.minimized;
+            card.append(header, text, actions); document.body.appendChild(card);
             function place(x, y) {
                 x = Math.max(8, Math.min(x, window.innerWidth - card.offsetWidth - 8));
                 y = Math.max(8, Math.min(y, window.innerHeight - 60));
@@ -170,11 +207,7 @@
     function openTools() {
         dialog("Appearance tools", (body, element) => {
             const actions = document.createElement("div"); actions.className = "c4style-tools-actions";
-            const menu = button("Expand / narrow menu", () => api.save_personal("menuCollapsed", !api.get_personal().menuCollapsed));
-            const width = button("Expand / narrow workspace", () => api.save_personal("workspaceWide", !api.get_personal().workspaceWide));
-            const direction = button("Switch text direction", () => api.save_personal("direction", document.documentElement.dir === "rtl" ? "ltr" : "rtl"));
-            [menu, width, direction].forEach(item => { item.dataset.c4stylePersonalAction = "true"; });
-            actions.append(menu, width, direction, button("Apps and workspaces", openLauncher), button("My sticky notes", openNotes));
+            actions.append(button("Apps and workspaces", openLauncher), button("My sticky notes", openNotes));
             if ((frappe.boot.c4style || {}).can_manage) {
                 actions.append(button("Choose site theme", openPalettes));
                 actions.append(button("Style Settings", () => { element.close(); frappe.set_route("Form", "Style Settings"); }));

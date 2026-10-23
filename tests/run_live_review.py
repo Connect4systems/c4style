@@ -201,7 +201,7 @@ def main():
             page.get_by_role('textbox', name='Note text', exact=True).last.fill('C4Style live QA note - remove after testing')
             page.get_by_role('button', name='Save notes', exact=True).click()
             page.wait_for_timeout(400)
-            page.get_by_role('button', name='Pin saved notes').click()
+            page.get_by_role('dialog', name='My sticky notes').get_by_role('button', name='Close', exact=True).click()
             assert page.locator('.c4style-note-window').count() >= 1
             handle = page.get_by_role('button', name='Move note with arrow keys or drag').last
             handle.focus()
@@ -209,7 +209,7 @@ def main():
             page.keyboard.press('ArrowRight')
             after = page.locator('.c4style-note-window').last.bounding_box()
             assert after['x'] > before['x']
-            page.get_by_role('button', name='Hide pinned note').last.click()
+            page.get_by_role('button', name='Delete note', exact=True).last.click()
             return dict(palettes=17, launcher=True, notes_saved_and_pinned=True)
         case('actual theme picker, searchable launcher and saved pinned note', tools_and_notes)
 

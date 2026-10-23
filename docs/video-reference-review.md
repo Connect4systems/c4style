@@ -26,7 +26,7 @@ This review uses visual storyboard samples at five-second intervals across the 1
 - Settings remain a native Single DocType rather than separate vendor Themes records.
 - Group counts cover loaded rows only; this is not server-wide aggregation or a pivot report.
 - Palette colors are independent approximations. Vendor code and branding are not included.
-- Vendor-specific loading animations have not been reproduced. Note text/colors persist per account; pin visibility and window positions last for the page session.
+- Vendor-specific loading animations have not been reproduced. Note text/colors and minimized state persist per account; saved notes reopen automatically after refresh. Window positions last for the page session.
 - Native filters, saved filters, sorting, view selection, bulk actions and record permissions retain their Frappe behavior.
 
 ## Validation
@@ -49,3 +49,10 @@ The video could not be fetched again because YouTube throttled the request. This
 The disabled legacy menu mode was reproduced on the deployed site. It used a native workspace sidebar about 90px from the viewport edge. The obsolete mode switch is now removed in favor of the consistent edge menu. Menu icon tokens and expanded-menu/header stacking were corrected. Short announcements no longer animate outside the visible strip; only overflowing text scrolls, with the text covering the viewport throughout the movement.
 
 Read-only authenticated follow-up checks passed for the actual disabled legacy state, hover expansion and colors, all three notification categories, close/Escape handling, workspace/list/form placement and mobile overflow. Native notifications showed an empty state for the test account; notification delivery itself was not tested. See `artifacts/menu-review/report.json` and the complete field audit in `docs/settings-field-audit.md`.
+
+
+## Sticky note actions
+
+Saved sticky notes now reopen automatically on Desk startup. Floating notes and note-editor cards expose Save, Minimize/Restore and Delete directly. Minimize persists separately from unsaved text; Save persists edited text. Delete persists removal. Failed saves restore saved state while retaining a floating note's text draft. Appearance tools no longer duplicates the menu's width, workspace width or direction controls.
+
+Browser regression coverage includes direct single-note save isolation, refresh restoration, minimized-state persistence, restoration of unsaved drafts while the page remains open, delete/refresh removal, and failures of Save/Minimize/Delete. Backend checks validate the optional minimized boolean while preserving compatibility with existing saved notes.

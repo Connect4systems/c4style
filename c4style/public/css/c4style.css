@@ -843,6 +843,9 @@ body[data-input-border-style] .c4style-note textarea { min-height: 150px; backgr
 .c4style-note-move { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: move; touch-action: none; }
 .c4style-note-move:focus-visible { outline: 2px solid var(--secondary); }
 .c4style-note-window textarea { flex: 1; min-height: 100px; }
+.c4style-note-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.c4style-note [hidden] { display: none !important; }
+.c4style-note-window.c4style-note-minimized { min-height: 0; height: auto !important; resize: none; }
 @media print { .c4style-note-window { display: none !important; } }
 
 /* Frappe resets body padding with !important and paints symbols via icon variables. */

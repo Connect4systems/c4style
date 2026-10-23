@@ -59,7 +59,9 @@ def validate(settings):
             valid = isinstance(value, str) and len(value) <= 1000
         elif key == 'notes':
             valid = isinstance(value, list) and len(value) <= 20 and all(
-                isinstance(note, dict) and set(note) == {'id', 'text', 'color'}
+                isinstance(note, dict) and {'id', 'text', 'color'} <= set(note)
+                and set(note) <= {'id', 'text', 'color', 'minimized'}
+                and ('minimized' not in note or type(note['minimized']) is bool)
                 and isinstance(note['id'], str) and 1 <= len(note['id']) <= 80
                 and isinstance(note['text'], str) and len(note['text']) <= 4000
                 and note['color'] in ('mint', 'sun', 'rose', 'sky') for note in value

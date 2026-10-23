@@ -143,6 +143,14 @@ class SettingsTests(unittest.TestCase):
             with self.subTest(notes=notes), self.assertRaises(ValidationError):
                 settings.validate({'notes':notes})
 
+    def test_notes_accept_persistent_minimized_state_and_reject_invalid_state(self):
+        note = {'id': 'one', 'text': 'Reminder', 'color': 'mint', 'minimized': True}
+        settings.save_settings({'notes': [note]})
+        self.assertEqual(json.loads(fake.defaults.set_default.call_args.args[1])['notes'], [note])
+        for value in (1, 'true', None, {}):
+            with self.subTest(value=value), self.assertRaises(ValidationError):
+                settings.validate({'notes': [{**note, 'minimized': value}]})
+
     def test_new_component_options_are_validated(self):
         for values in ({'headerStyle':'javascript:evil'},{'announcementSpeed':0},{'announcementText':'x'*1001}, {'inputBorderStyle':'url(evil)'}):
             with self.subTest(values=values),self.assertRaises(ValidationError):settings.validate(values)

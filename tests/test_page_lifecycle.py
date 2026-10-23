@@ -31,6 +31,9 @@ class MenuTests(unittest.TestCase):
             <span class="sidebar-item-icon">A</span><span class="sidebar-item-label">Accounting</span></a></div>
             </div></aside><main>Workspace</main></div></body></html>'''))
         self.page.goto('https://c4style.test/app/home')
+        self.load_fixture_assets()
+
+    def load_fixture_assets(self):
         self.page.add_style_tag(content=(ROOT / 'c4style/public/css/c4style.css').read_text(encoding='utf-8'))
         self.page.add_script_tag(content='''
             window.__ = text => text;
@@ -42,6 +45,7 @@ class MenuTests(unittest.TestCase):
                 ui: {form: {on: (name, events) => { window.formEvents = events; }}},
                 call(options) {
                     calls.push(options.args);
+                    if (options.args.scope !== 'site') sessionStorage.setItem('test-personal', JSON.stringify({...frappe.c4style.get_personal(),...JSON.parse(options.args.settings)}));
                     if (options.callback) options.callback({message:{}});
                     if (options.always) options.always();
                 },
@@ -49,6 +53,7 @@ class MenuTests(unittest.TestCase):
                 container: {add_page: () => ({})}
             };
         ''')
+        self.page.evaluate("frappe.boot.c4style.personal=JSON.parse(sessionStorage.getItem('test-personal') || '{}')")
         self.page.add_script_tag(content=(ROOT / 'c4style/public/js/c4style.js').read_text(encoding='utf-8'))
         self.page.add_script_tag(content=(ROOT / 'c4style/public/js/desk_tools.js').read_text(encoding='utf-8'))
 
@@ -224,6 +229,8 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.get_by_role('button',name='Choose site theme').count(),0)
         self.assertEqual(self.page.get_by_role('button',name='Style Settings',exact=True).count(),0)
         self.assertTrue(self.page.get_by_role('button',name='My sticky notes').is_visible())
+        for name in ('Switch text direction', 'Expand / narrow workspace', 'Expand / narrow menu'):
+            self.assertEqual(self.page.get_by_role('dialog').get_by_role('button', name=name, exact=True).count(), 0)
         self.page.keyboard.press('Escape')
         self.assertEqual(self.page.get_by_role('dialog').count(),0)
 
@@ -256,6 +263,67 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('calls.length'),0)
         self.page.get_by_role('button',name='Save notes').click()
         self.assertEqual(self.page.evaluate('JSON.parse(calls[0].settings).notes[0].text'),'Call supplier <script>hello</script>')
+
+    def test_direct_note_save_does_not_save_other_unfinished_notes(self):
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='My sticky notes',exact=True).click()
+        self.page.get_by_role('button',name='Add note').click()
+        self.page.get_by_role('button',name='Add note').click()
+        notes = self.page.locator('.c4style-notes-grid .c4style-note')
+        notes.nth(0).get_by_role('textbox').fill('Save only this')
+        notes.nth(1).get_by_role('textbox').fill('Unfinished draft')
+        self.assertEqual(notes.nth(0).locator('button').count(), 3)
+        notes.nth(0).get_by_role('button',name='Save note',exact=True).click()
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_personal().notes.map(note=>note.text)'), ['Save only this'])
+
+    def test_note_minimize_refresh_restore_save_and_delete(self):
+        self.page.evaluate('frappe.c4style.save_personal("notes",[{id:"one",text:"Saved reminder",color:"mint"}])')
+        note = self.page.locator('.c4style-note-window')
+        self.assertEqual(note.locator('button').count(), 3)
+        note.get_by_role('textbox').fill('Unsaved draft')
+        note.get_by_role('button',name='Minimize',exact=True).click()
+        self.assertFalse(note.get_by_role('textbox',include_hidden=True).is_visible())
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_personal().notes[0].text'), 'Saved reminder')
+        note.get_by_role('button',name='Restore',exact=True).click()
+        self.assertEqual(note.get_by_role('textbox').input_value(), 'Unsaved draft')
+        note.get_by_role('button',name='Save note',exact=True).click()
+        note.get_by_role('button',name='Minimize',exact=True).click()
+        self.page.reload()
+        self.load_fixture_assets()
+        note = self.page.locator('.c4style-note-window')
+        self.assertTrue(note.is_visible())
+        self.assertTrue(note.get_by_role('button',name='Restore',exact=True).is_visible())
+        note.get_by_role('button',name='Restore',exact=True).click()
+        self.assertEqual(note.get_by_role('textbox').input_value(), 'Unsaved draft')
+        note.get_by_role('button',name='Delete note',exact=True).click()
+        self.assertEqual(self.page.locator('.c4style-note-window').count(), 0)
+        self.page.reload()
+        self.load_fixture_assets()
+        self.assertEqual(self.page.locator('.c4style-note-window').count(), 0)
+
+    def test_failed_note_minimize_and_delete_preserve_the_note(self):
+        self.page.evaluate('frappe.c4style.save_personal("notes",[{id:"one",text:"Keep this",color:"mint"}])')
+        self.page.evaluate('()=>{frappe.call=options=>{options.error();options.always();};}')
+        note = self.page.locator('.c4style-note-window')
+        note.get_by_role('button',name='Minimize',exact=True).click()
+        self.assertTrue(note.get_by_role('textbox').is_visible())
+        note.get_by_role('button',name='Delete note',exact=True).click()
+        self.assertEqual(note.get_by_role('textbox').input_value(), 'Keep this')
+        note.get_by_role('textbox').fill('Keep this draft too')
+        note.get_by_role('button',name='Save note',exact=True).click()
+        self.assertEqual(note.get_by_role('textbox').input_value(), 'Keep this draft too')
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_personal().notes[0].text'), 'Keep this')
+
+    def test_editor_keeps_saved_note_when_delete_or_minimize_fails(self):
+        self.page.evaluate('frappe.c4style.save_personal("notes",[{id:"one",text:"Keep this",color:"mint"}])')
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='My sticky notes',exact=True).click()
+        self.page.evaluate('()=>{frappe.call=options=>{options.error();options.always();};}')
+        editor = self.page.get_by_role('dialog',name='My sticky notes')
+        editor.get_by_role('button',name='Minimize',exact=True).click()
+        self.assertTrue(editor.get_by_role('textbox').is_visible())
+        editor.get_by_role('button',name='Delete note',exact=True).click()
+        self.assertEqual(editor.get_by_role('textbox').input_value(), 'Keep this')
 
     def test_grouping_loaded_rows_preserves_links_selection_and_ungroup_order(self):
         self.page.evaluate('''() => {
@@ -318,13 +386,13 @@ class MenuTests(unittest.TestCase):
         self.page.get_by_role('button',name='Scroll to top',exact=True).click()
         self.assertEqual(self.page.evaluate('window.scrollY'),0)
 
-    def test_saved_notes_can_be_pinned_and_moved_with_keyboard(self):
+    def test_saved_notes_open_automatically_and_can_be_moved_saved_and_deleted(self):
         self.page.get_by_role('button',name='Appearance tools',exact=True).click()
         self.page.get_by_role('button',name='My sticky notes',exact=True).click()
         self.page.get_by_role('button',name='Add note').click()
         self.page.get_by_role('textbox',name='Note text',exact=True).fill('Private reminder')
         self.page.get_by_role('button',name='Save notes',exact=True).click()
-        self.page.get_by_role('button',name='Pin saved notes',exact=True).click()
+        self.page.get_by_role('dialog',name='My sticky notes').get_by_role('button',name='Close',exact=True).click()
         window=self.page.locator('.c4style-note-window')
         self.assertTrue(window.is_visible())
         before=window.bounding_box()
@@ -334,7 +402,7 @@ class MenuTests(unittest.TestCase):
         self.page.get_by_role('textbox',name='Pinned note text',exact=True).fill('Updated reminder')
         self.page.get_by_role('button',name='Save note',exact=True).click()
         self.assertEqual(self.page.evaluate('JSON.parse(calls[1].settings).notes[0].text'),'Updated reminder')
-        self.page.get_by_role('button',name='Hide pinned note',exact=True).click()
+        self.page.get_by_role('button',name='Delete note',exact=True).click()
         self.assertEqual(self.page.locator('.c4style-note-window').count(),0)
 
     def test_menu_offset_overrides_frappe_important_body_reset(self):

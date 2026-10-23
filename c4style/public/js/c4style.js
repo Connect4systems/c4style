@@ -420,7 +420,7 @@
     }
 
     let savingPersonal = false;
-    function savePersonal(key, value) {
+    function savePersonal(key, value, onSaved) {
         if (savingPersonal) return;
         savingPersonal = true;
         const previous = personal[key];
@@ -432,9 +432,13 @@
             method: "c4style.settings.save_settings", args: { settings: JSON.stringify({ [key]: value }) },
             callback: () => {
                 if (frappe.c4style.sync_tools) frappe.c4style.sync_tools();
+                if (typeof onSaved === "function") onSaved();
                 frappe.show_alert({ message: key === "notes" ? __("Notes saved") : __("Layout preference saved"), indicator: "green" });
             },
-            error: () => { personal[key] = previous; applyPersonal(); refreshMenus(); },
+            error: () => {
+                personal[key] = previous; applyPersonal(); refreshMenus();
+                if (frappe.c4style.sync_tools) frappe.c4style.sync_tools();
+            },
             always: () => { savingPersonal = false; document.querySelectorAll("[data-c4style-menu-controls] button, [data-c4style-personal-action]").forEach(item => { item.disabled = false; }); },
         });
     }

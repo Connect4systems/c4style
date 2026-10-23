@@ -853,7 +853,7 @@ body[data-input-border-style] .c4style-note textarea { min-height: 150px; backgr
 }
 .c4style-app-menu { display: flex; flex-direction: column; overflow: hidden; }
 .c4style-brand { flex: 0 0 auto; }
-.c4style-app-menu .desk-sidebar { flex: 1; min-height: 0; overflow: hidden; }
+.c4style-app-menu .desk-sidebar { flex: 1; min-height: 0; overflow: hidden; background: var(--c4style-menu-bg); }
 .c4style-app-menu .desk-sidebar > nav { flex: 1; min-height: 0; overflow-y: auto; }
 .c4style-app-menu .c4style-menu-controls { flex-shrink: 0; margin-block: 0; }
 @media (max-width: 767px) {
@@ -896,3 +896,17 @@ body.c4style-native-drawers .navbar { perspective: none !important; }
 body.c4style-compact .list-row-container .list-row { min-height: 32px; padding-block: 4px; }
 body.c4style-compact .list-row-container { margin-block: 4px; }
 body.c4style-compact .form-layout .frappe-control { padding-block: 6px; }
+
+/* Native workspace navigation uses the same hover colors and focus treatment. */
+.desk-sidebar .standard-sidebar-item:is(:hover, :focus-within) .item-anchor {
+    background: var(--c4style-menu-active) !important;
+    color: var(--c4style-menu-text) !important;
+}
+body[data-menu-behavior="hover"].c4style-menu-collapsed:not(.c4style-has-app-menu) .c4style-menu-section:is(:hover, :focus-within) {
+    flex-basis: 236px !important;
+    width: 236px !important;
+    max-width: 236px !important;
+}
+body[data-menu-behavior="hover"].c4style-menu-collapsed:not(.c4style-has-app-menu) .c4style-menu-section:is(:hover, :focus-within) .sidebar-item-label {
+    display: initial !important;
+}

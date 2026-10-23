@@ -221,7 +221,7 @@
         const hasNative = !!(native && native.children.length);
         if (bar.hidden !== hasNative) bar.hidden = hasNative;
         if (hasNative) return;
-        const route = frappe.get_route();
+        const route = frappe.get_route() || [];
         const entries = [];
         if ((route[0] === "List" || route[0] === "Form") && route[1]) {
             const doctype = route[1];
@@ -259,13 +259,14 @@
         document.documentElement.style.setProperty("--c4style-page-head-height", `${pageHead ? pageHead.offsetHeight : 60}px`);
     }
     function closeNativeDrawer() {
-        document.querySelectorAll(".dropdown-notifications.show, .dropdown-navbar-user.show").forEach(item => {
+        document.querySelectorAll(".dropdown-notifications, .dropdown-navbar-user").forEach(item => {
+            if (!item.classList.contains("show") && !item.querySelector(".dropdown-menu.show")) return;
             const toggle = item.querySelector('[data-toggle="dropdown"], [data-bs-toggle="dropdown"]');
             if (toggle) toggle.click();
         });
     }
     function updateDrawerBackdrop() {
-        const active = api.get_theme().nativeDrawers && document.querySelector(".dropdown-notifications.show, .dropdown-navbar-user.show");
+        const active = api.get_theme().nativeDrawers && document.querySelector(".dropdown-notifications.show, .dropdown-navbar-user.show, .dropdown-notifications > .dropdown-menu.show, .dropdown-navbar-user > .dropdown-menu.show");
         const existing = document.querySelector(".c4style-drawer-backdrop");
         if (active && !existing) {
             const backdrop = document.createElement("div"); backdrop.className = "c4style-drawer-backdrop";
@@ -276,13 +277,13 @@
         document.body.classList.toggle("c4style-native-drawers", !!api.get_theme().nativeDrawers);
         document.querySelectorAll(".dropdown-notifications, .dropdown-navbar-user").forEach(dropdown => {
             const menu = dropdown.querySelector(".dropdown-menu");
-            if (!menu || observedDropdowns.has(dropdown)) return;
-            observedDropdowns.add(dropdown);
+            if (!menu || observedDropdowns.has(menu)) return;
+            observedDropdowns.add(menu);
             const header = document.createElement("div"); header.className = "c4style-native-drawer-header";
             const title = document.createElement("strong"); title.textContent = dropdown.matches(".dropdown-notifications") ? __("Notifications") : __("User menu");
             const close = button("Close", event => { event.preventDefault(); event.stopPropagation(); closeNativeDrawer(); }, "btn btn-default btn-sm");
             header.append(title, close); menu.prepend(header);
-            new MutationObserver(updateDrawerBackdrop).observe(dropdown, { attributes: true, attributeFilter: ["class"] });
+            new MutationObserver(updateDrawerBackdrop).observe(dropdown, { attributes: true, attributeFilter: ["class"], subtree: true });
         });
         updateDrawerBackdrop();
     }

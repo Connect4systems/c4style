@@ -110,6 +110,21 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(doc['issingle'], 1)
         self.assertEqual({p['role'] for p in doc['permissions']}, {'System Manager', 'Website Manager'})
 
+    def test_missing_colors_follow_selected_palette(self):
+        self.doc.get.side_effect = lambda field: {'palette': 'Wine', 'primary': '#123456'}.get(field)
+        values = settings.document_settings(self.doc)
+        self.assertEqual(values['primary'], '#123456')
+        self.assertEqual(values['menuBackground'], '#701A3D')
+        self.assertEqual(values['announcementColor'], '#831843')
+
+    def test_palette_only_api_applies_defaults_and_preserves_explicit_edits(self):
+        fake.get_roles.return_value = ['Website Manager']
+        self.doc.meta.get_field.return_value.options = 'Wine\nCustom'
+        settings.save_settings({'primary': '#123456'}, 'site', palette='Wine')
+        self.doc.set.assert_any_call('menu_background', '#701A3D')
+        self.doc.set.assert_any_call('announcement_color', '#831843')
+        self.doc.set.assert_any_call('primary', '#123456')
+
     def test_notes_validate_limits_and_do_not_change_site_colors(self):
         note={'id':'one','text':'Private reminder','color':'mint'}
         settings.save_settings({'notes':[note]})

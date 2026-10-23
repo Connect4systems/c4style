@@ -18,7 +18,9 @@
         "row_hover_background": "#E5E8EB",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#E5E8EB",
+        "announcement_color": "#714B67"
     },
     "Ocean": {
         "primary": "#155E75",
@@ -37,7 +39,9 @@
         "row_hover_background": "#EAF2F8",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#EAF2F8",
+        "announcement_color": "#155E75"
     },
     "Forest": {
         "primary": "#365C46",
@@ -56,7 +60,9 @@
         "row_hover_background": "#EEF3EE",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#EEF3EE",
+        "announcement_color": "#365C46"
     },
     "Sunset": {
         "primary": "#8B4A3C",
@@ -75,7 +81,9 @@
         "row_hover_background": "#F7F0E8",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#F7F0E8",
+        "announcement_color": "#8B4A3C"
     },
     "Lime Fresh": {
         "primary": "#3F6212",
@@ -94,7 +102,9 @@
         "row_hover_background": "#F2F8EC",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#F2F8EC",
+        "announcement_color": "#3F6212"
     },
     "Wine": {
         "primary": "#831843",
@@ -113,7 +123,9 @@
         "row_hover_background": "#FFF1F5",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#FFF1F5",
+        "announcement_color": "#831843"
     },
     "Crimson Red": {
         "primary": "#9F1239",
@@ -132,7 +144,9 @@
         "row_hover_background": "#FFF1F2",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#FFF1F2",
+        "announcement_color": "#9F1239"
     },
     "Ocean Teal": {
         "primary": "#115E59",
@@ -151,7 +165,9 @@
         "row_hover_background": "#F0FDFA",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#F0FDFA",
+        "announcement_color": "#115E59"
     },
     "Burnt Orange": {
         "primary": "#9A3412",
@@ -170,7 +186,9 @@
         "row_hover_background": "#FFF7ED",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#FFF7ED",
+        "announcement_color": "#9A3412"
     },
     "Indigo Night": {
         "primary": "#3730A3",
@@ -189,7 +207,9 @@
         "row_hover_background": "#EEF2FF",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#EEF2FF",
+        "announcement_color": "#3730A3"
     },
     "Dark Green": {
         "primary": "#14532D",
@@ -208,7 +228,9 @@
         "row_hover_background": "#F0FDF4",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#F0FDF4",
+        "announcement_color": "#14532D"
     },
     "Royal Purple": {
         "primary": "#6B21A8",
@@ -227,7 +249,9 @@
         "row_hover_background": "#FAF5FF",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#FAF5FF",
+        "announcement_color": "#6B21A8"
     },
     "Jet Black": {
         "primary": "#27272A",
@@ -246,7 +270,9 @@
         "row_hover_background": "#F4F4F5",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#F4F4F5",
+        "announcement_color": "#27272A"
     },
     "Sky Blue": {
         "primary": "#0369A1",
@@ -265,7 +291,9 @@
         "row_hover_background": "#F0F9FF",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#F0F9FF",
+        "announcement_color": "#0369A1"
     },
     "Charcoal Grey": {
         "primary": "#374151",
@@ -284,7 +312,9 @@
         "row_hover_background": "#F3F4F6",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#F3F4F6",
+        "announcement_color": "#374151"
     },
     "Coffee Brown": {
         "primary": "#713F12",
@@ -303,7 +333,9 @@
         "row_hover_background": "#FAF6F0",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#FAF6F0",
+        "announcement_color": "#713F12"
     },
     "Rose Pink": {
         "primary": "#9D174D",
@@ -322,10 +354,12 @@
         "row_hover_background": "#FDF2F8",
         "row_border": "#CAD3C4",
         "input_background": "#FFFFFF",
-        "input_border": "#A9B49F"
+        "input_border": "#A9B49F",
+        "announcement_background": "#FDF2F8",
+        "announcement_color": "#9D174D"
     }
 };
-    const boot = (frappe.boot && frappe.boot.c4style) || {};
+    let boot = (frappe.boot && frappe.boot.c4style) || {};
     let theme = boot.site || {};
     let personal = { menuCollapsed: theme.menuDefaultCollapsed !== false, workspaceWide: false, direction: "auto", notes: [], ...(boot.personal || {}) };
     const originalDirection = document.documentElement.getAttribute("dir") || "ltr";
@@ -584,6 +618,7 @@
         primary: "primary", accent: "accent", background: "background", menuBackground: "menu_background", menuText: "menu_text", menuActive: "menu_active",
         navbarBackground: "navbar_background", navbarText: "navbar_text", panelBackground: "panel_background", tableHeaderBackground: "table_header_background", tableHeaderText: "table_header_text",
         secondaryBackground: "secondary_background", secondaryText: "secondary_text", rowHoverBackground: "row_hover_background", rowBorder: "row_border", inputBackground: "input_background", inputBorder: "input_border",
+        announcementBackground: "announcement_background", announcementColor: "announcement_color",
     };
     frappe.c4style = {
         apply_theme: applyTheme, palettes,
@@ -599,14 +634,28 @@
         frappe.set_route("Form", "Style Settings");
     };
     try { localStorage.removeItem("_page:c4style-settings"); } catch (error) { /* Storage is optional. */ }
+    function loadBootTheme() {
+        const current = frappe.boot && frappe.boot.c4style;
+        if (current && current !== boot) {
+            boot = current;
+            theme = { ...current.site };
+            personal = { menuCollapsed: theme.menuDefaultCollapsed !== false, workspaceWide: false,
+                direction: "auto", notes: [], ...(current.personal || {}) };
+        }
+        applyTheme(theme);
+    }
     function start() {
         document.querySelectorAll("[data-c4style-settings-link]").forEach(link => link.remove());
-        applyTheme(theme);
+        loadBootTheme();
         applyPersonal();
         refreshMenus();
+        if (window.jQuery) window.jQuery(document).on("app_ready.c4style", loadBootTheme);
         new MutationObserver(refreshMenus).observe(document.body, { childList: true, subtree: true });
         if (frappe.router && frappe.router.on) frappe.router.on("change", () => {
+            syncNavigation();
+            refreshMenus();
             markActiveWorkspace(window.location.pathname);
+            if (frappe.c4style.sync_tools) frappe.c4style.sync_tools();
         });
     }
     if (document.body) start();

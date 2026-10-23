@@ -18,7 +18,7 @@ Add the css file in Website Settings, Header TAB:<br>
 
 Open **C4Style > Style Settings** inside Desk, or search for **Style Settings**. The native Single DocType is available at `/app/style-settings`. Only **System Manager** and **Website Manager** can read and edit it. The header settings button has been removed.
 
-Choose one of 17 palettes or customize primary, accent, page, card, header, table, menu and text/icon colors. The Single DocType has Theme, Navigation, Components, Announcement and Preview tabs. Components include capsule/flat headers, separated/flat rows, dashed/solid/no input borders, boxed/underline fields, filled/outline buttons and optional shadows. Typography, spacing and direction are configurable. Save to apply the shared Desk theme; other sessions receive changes after reloading. Old personal color overrides no longer override the manager's theme.
+Each built-in palette supplies defaults for every theme color, including menu, component and announcement colors. **Reset palette colors** restores the selected preset before saving; explicit manager customizations remain saved until changed. Choose one of 17 palettes or customize primary, accent, page, card, header, table, menu and text/icon colors. The Single DocType has Theme, Navigation, Components, Announcement and Preview tabs. Components include capsule/flat headers, separated/flat rows, dashed/solid/no input borders, boxed/underline fields, filled/outline buttons and optional shadows. Typography, spacing and direction are configurable. Save to apply the shared Desk theme; other sessions receive changes after reloading. Old personal color overrides no longer override the manager's theme.
 
 The optional persistent navigation menu remains available on workspace, list, and form pages. It builds links exclusively from Frappe's `allowed_workspaces` boot data, preserves private workspace routes and nested groups, and hides the duplicate workspace sidebar. New users start with an icon-only menu by default. Optional hover/focus expansion keeps their saved width preference. Disable **Show workspace menu on every Desk page** to restore the native workspace sidebar. The existing app logo opens a searchable workspace launcher.
 
@@ -50,3 +50,11 @@ For standalone checks, run `python -B -m unittest discover -s tests -v`. Browser
 #### License
 
 mit
+
+Authenticated regression checks with browser-local assets can be run with:
+
+```sh
+python -B tests/run_regression_review.py --base-url https://your-site --session-file /temporary/session.json
+```
+
+This check temporarily saves shared style options and restores the original settings in `finally`, then verifies them after reload. It does not deploy local app files. Use a test site or an agreed testing window.

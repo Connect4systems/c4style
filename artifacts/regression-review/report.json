@@ -1,0 +1,72 @@
+{
+  "base_url": "https://oro.connect4systems.com",
+  "local_asset_override": true,
+  "checks": [
+    {
+      "name": "all five native settings tabs reveal their controls",
+      "passed": true,
+      "detail": [
+        "Theme",
+        "Navigation",
+        "Components",
+        "Announcement",
+        "Preview"
+      ]
+    },
+    {
+      "name": "17 palettes persist every menu, component and announcement color",
+      "passed": true,
+      "detail": {
+        "presets": 17,
+        "colors_per_preset": 19
+      }
+    },
+    {
+      "name": "all 15 component and menu behavior choices save and apply",
+      "passed": true,
+      "detail": {
+        "choices": 15
+      }
+    },
+    {
+      "name": "menu expands on hover and workspace links navigate",
+      "passed": true,
+      "detail": {
+        "workspace_route": "/app/stock",
+        "hover_expands": true
+      }
+    },
+    {
+      "name": "notifications and user drawers open, stay clickable and close",
+      "passed": true,
+      "detail": {
+        "native_drawers": 2
+      }
+    },
+    {
+      "name": "announcement renders safely and dismisses",
+      "passed": true,
+      "detail": {
+        "show": true,
+        "dismiss": true,
+        "escaped": true
+      }
+    },
+    {
+      "name": "mobile view has no horizontal page overflow",
+      "passed": true,
+      "detail": {
+        "width": 390
+      }
+    },
+    {
+      "name": "original shared settings restored and verified after reload",
+      "passed": true
+    },
+    {
+      "name": "native Reset palette colors, Save, and reload persistence; original settings restored",
+      "passed": true
+    }
+  ],
+  "browser_errors": []
+}

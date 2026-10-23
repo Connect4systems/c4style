@@ -47,11 +47,20 @@ function c4style_preview(frm) {
 const c4style_form_events = {
     refresh(frm) {
         frm.set_intro(__("Choose a palette, then customize its colors and typography. Save to apply it to everyone. Each user controls their own menu and workspace width."));
+        if (frm.add_custom_button && c4style_palettes[frm.doc.palette]) {
+            frm.add_custom_button(__("Reset palette colors"), async () => {
+                await frm.set_value(c4style_palettes[frm.doc.palette]);
+                c4style_preview(frm);
+            });
+        }
         c4style_preview(frm);
     },
-    palette(frm) {
+    async palette(frm) {
         const values = c4style_palettes[frm.doc.palette];
-        if (values) return frm.set_value(values);
+        if (values) {
+            await frm.set_value(values);
+            c4style_preview(frm);
+        }
     },
     after_save(frm) {
         frappe.call({ method: "c4style.settings.get_settings", callback: response => {

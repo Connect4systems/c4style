@@ -1,10 +1,12 @@
 import json
 import math
 import re
+from pathlib import Path
 
 import frappe
 
 KEY = 'c4style_settings'
+PALETTES = json.loads(Path(__file__).with_name('palettes.json').read_text(encoding='utf-8'))
 DEFAULTS = dict(primary='#714B67', accent='#017E84', background='#E5E8EB',
                 fontSize=14, radius=6, density='comfortable', workspaceWide=False,
                 direction='auto', menuCollapsed=False, menuBackground='#FFFFFF',
@@ -104,7 +106,8 @@ PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed', 'notes'}
 
 
 def document_settings(doc):
-    values = {key: doc.get(field) if doc.get(field) is not None else DEFAULTS[key]
+    palette = PALETTES.get(doc.get('palette'), {})
+    values = {key: doc.get(field) if doc.get(field) not in (None, '') else palette.get(field, DEFAULTS[key])
               for key, field in SITE_FIELDS.items()}
     for key in ('persistentMenu', 'menuDefaultCollapsed', 'showScrollButtons', 'nativeDrawers', 'enableAnnouncement'):
         if values[key] in (0, 1):
@@ -147,6 +150,9 @@ def save_settings(settings, scope='personal', palette=None):
             if not isinstance(palette, str) or palette not in choices:
                 frappe.throw('Invalid palette')
             doc.set('palette', palette)
+            # Apply the entire preset; explicit manager edits win.
+            values = {**{key: PALETTES[palette][field] for key, field in SITE_FIELDS.items()
+                         if field in PALETTES.get(palette, {})}, **values}
         for key, value in values.items():
             if key in SITE_FIELDS:
                 doc.set(SITE_FIELDS[key], value)

@@ -82,6 +82,41 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('paletteValues.menu_background'), '#153747')
         self.assertEqual(self.page.evaluate('paletteValues.primary'), '#155E75')
 
+    def test_breadcrumbs_allow_unresolved_startup_route(self):
+        self.page.evaluate('''() => {
+            document.querySelector('.navbar').innerHTML='<div class="container"></div>';
+            frappe.get_route=()=>null;
+            frappe.c4style.sync_tools();
+        }''')
+        self.assertEqual(self.page.locator('.c4style-breadcrumbs').inner_text(), 'Home')
+
+    def test_theme_is_loaded_when_desk_boot_arrives_after_assets(self):
+        self.page.reload()
+        self.page.add_script_tag(content='''
+            window.__=text=>text;
+            window.frappe={boot:{},pages:{}};
+            window.jQuery=()=>({on:(event,callback)=>{window.deskReady=callback;}});
+        ''')
+        self.page.add_script_tag(content=(ROOT / 'c4style/public/js/c4style.js').read_text())
+        self.page.evaluate('''() => {
+            frappe.boot.c4style={site:{primary:'#831843',menuDefaultCollapsed:false,
+                enableAnnouncement:true,announcementText:'Ready',nativeDrawers:true},
+                personal:{direction:'rtl'},can_manage:false};
+            deskReady();
+        }''')
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#831843')
+        self.assertEqual(self.page.locator('html').get_attribute('dir'), 'rtl')
+        self.assertFalse(self.page.evaluate('frappe.c4style.get_personal().menuCollapsed'))
+
+    def test_all_palette_colors_match_server_defaults(self):
+        import json
+        expected = json.loads((ROOT / 'c4style/palettes.json').read_text())
+        self.assertEqual(self.page.evaluate('frappe.c4style.palettes'), expected)
+        for name in expected:
+            values = self.page.evaluate('name=>frappe.c4style.palette_settings(name)', name)
+            self.assertEqual(len(values), len(expected[name]))
+            self.assertTrue(all(values.values()))
+
     def test_new_sidebars_get_toggle_without_duplicate_buttons(self):
         self.page.evaluate('document.body.insertAdjacentHTML("beforeend", \'<aside class="layout-side-section"><div class="desk-sidebar"></div></aside>\')')
         self.page.wait_for_function('document.querySelectorAll("[data-c4style-menu-controls]").length === 2')

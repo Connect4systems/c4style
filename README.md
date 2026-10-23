@@ -69,6 +69,8 @@ python -B tests/run_menu_review.py --base-url https://your-site --session-file /
 
 Add `--local-assets` only when deliberately testing local public files against the live server. The default performs read-only checks of deployed files.
 
-#### Workflow transition notifications
+#### Notifications
 
-Saved Workflow transition rows include **Create System Notification** beside **Send Email To Creator**. It opens an unsaved native Notification with the Workflow DocType, document owner and the row's Allowed role. Conditions are evaluated before the state change; alerts are delivered for the matching successful transition. Repeated button clicks reopen the existing rule. This feature requires migration. See [configuration, behavior and test instructions](docs/workflow-notifications.md).
+Create notifications manually using Frappe's Notification form. C4Style's workflow
+notification extension has been removed; Administration handles approval actions.
+After upgrading, run site migration to remove the retired custom controls.

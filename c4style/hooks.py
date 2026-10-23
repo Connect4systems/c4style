@@ -239,31 +239,5 @@ app_include_js = [_asset_url("js/c4style.js"), _asset_url("js/desk_tools.js"), _
 # Include saved site and user appearance in the Desk boot payload.
 extend_bootinfo = "c4style.settings.boot_session"
 
-# Workflow notification extension; all core Workflow/Notification code stays intact.
-after_install = "c4style.install_workflow_notifications.install"
-after_migrate = "c4style.install_workflow_notifications.install"
-doctype_js = {
-    "Workflow": "public/js/workflow_notifications.js",
-    "Notification": "public/js/workflow_notification_rule.js",
-}
-override_whitelisted_methods = {
-    "frappe.model.workflow.apply_workflow": "c4style.workflow_notifications.apply_workflow",
-    "frappe.model.workflow.bulk_workflow_approval": "c4style.workflow_notifications.bulk_workflow_approval",
-}
-doc_events = {
-    "Notification": {
-        "before_validate": "c4style.workflow_notifications.validate_notification",
-        "on_update": "c4style.workflow_notifications.link_notification",
-        "on_trash": "c4style.workflow_notifications.unlink_notification",
-    },
-    "Workflow": {"on_update": "c4style.workflow_notifications.sync_workflow_notifications"},
-    "*": {
-        "before_validate": "c4style.workflow_notifications.capture_transition",
-        "before_cancel": "c4style.workflow_notifications.capture_transition",
-        "before_update_after_submit": "c4style.workflow_notifications.capture_transition",
-        "on_update": "c4style.workflow_notifications.deliver_transition",
-        "on_submit": "c4style.workflow_notifications.deliver_transition",
-        "on_cancel": "c4style.workflow_notifications.deliver_transition",
-        "on_update_after_submit": "c4style.workflow_notifications.deliver_transition",
-    },
-}
+# Remove retired workflow notification controls from existing installations.
+after_migrate = "c4style.remove_workflow_notifications.execute"

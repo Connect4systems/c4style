@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import types
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 
 class ValidationError(Exception):
@@ -39,6 +39,7 @@ else:
 
 class SettingsTests(unittest.TestCase):
     def setUp(self):
+        fake.get_all = Mock(return_value=[dict(name=name, **colors) for name, colors in settings.PALETTES.items()])
         fake.session.user = 'user@example.com'
         fake.get_roles.return_value = []
         fake.defaults.set_default.reset_mock()
@@ -145,6 +146,75 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(values['primary'], '#123456')
         self.assertEqual(values['menuBackground'], '#701A3D')
         self.assertEqual(values['announcementColor'], '#831843')
+
+    def test_database_palettes_replace_builtins_and_disabled_choices_are_rejected(self):
+        colors = dict(settings.PALETTES['Ocean'], primary='#123456')
+        fake.get_all.return_value = [dict(name='Company Blue', **colors)]
+        self.assertEqual(settings.get_palettes(), {'Company Blue': colors})
+        self.assertEqual(settings.get_palette('Company Blue')['primary'], '#123456')
+        fake.get_all.assert_called_with('Color Palette', filters={'enabled': 1},
+            fields=['name', *list(settings.PALETTES['C4Style'])], order_by='name')
+        for name in ('Ocean', 'Deleted Palette'):
+            with self.assertRaises(ValidationError): settings.get_palette(name)
+            with self.assertRaises(ValidationError): settings.save_settings({'themePalette': name})
+
+    def test_unavailable_personal_palette_does_not_discard_layout_and_notes(self):
+        fake.get_all.return_value = []
+        fake.defaults.get_defaults_for.return_value = {settings.KEY: json.dumps({
+            'themePalette': 'Ocean', 'menuCollapsed': True,
+            'notes': [{'id': 'one', 'text': 'Keep this', 'color': 'mint'}]})}
+        personal = settings.read_settings(fake.session.user)
+        self.assertNotIn('themePalette', personal)
+        self.assertTrue(personal['menuCollapsed'])
+        self.assertEqual(personal['notes'][0]['text'], 'Keep this')
+
+    def test_palette_doctype_is_managed_only_by_requested_roles(self):
+        schema = json.loads((Path(__file__).parents[1] /
+            'c4style/c4style/doctype/color_palette/color_palette.json').read_text())
+        self.assertEqual(schema['allow_rename'], 1)
+        self.assertEqual({p['role'] for p in schema['permissions']}, {'System Manager', 'Website Manager'})
+        for permission in schema['permissions']:
+            self.assertTrue(all(permission[key] for key in ('create','read','write','delete','rename')))
+        self.assertEqual({field['fieldname'] for field in schema['fields'] if field['fieldtype']=='Color'},
+                         set(settings.PALETTES['C4Style']))
+
+    def test_palette_seed_preserves_existing_records_and_custom_site_colors(self):
+        service = types.ModuleType('frappe')
+        service.db = types.SimpleNamespace(exists=Mock(return_value=True),
+            get_single_value=Mock(return_value='Custom'), set_single_value=Mock())
+        service.get_doc = Mock(); service.clear_cache = Mock()
+        with patch.dict(sys.modules, {'frappe': service, 'c4style.settings': settings}):
+            spec = importlib.util.spec_from_file_location('palette_seed',
+                Path(__file__).parents[1] / 'c4style/install_palettes.py')
+            seed = importlib.util.module_from_spec(spec); spec.loader.exec_module(seed)
+            seed.execute()
+            service.get_doc.assert_not_called()
+            service.db.set_single_value.assert_called_once_with('Style Settings', 'palette', '')
+            service.db.exists.return_value = False
+            seed.execute()
+            self.assertEqual(service.get_doc.call_count, 17)
+            self.assertTrue(all(call.args[0]['enabled'] == 1 for call in service.get_doc.call_args_list))
+
+    def test_palette_rename_preserves_personal_preferences_and_validates_colors(self):
+        service = types.ModuleType('frappe'); service.throw = throw; service.clear_cache = Mock()
+        service.get_all = Mock(return_value=[types.SimpleNamespace(name='pref-1',defvalue=json.dumps({
+            'themePalette':'Old name','menuCollapsed':True})),
+            types.SimpleNamespace(name='pref-2',defvalue='broken')])
+        service.db = types.SimpleNamespace(set_value=Mock())
+        document = types.ModuleType('frappe.model.document'); document.Document = object
+        with patch.dict(sys.modules, {'frappe':service, 'c4style.settings':settings,
+                                     'frappe.model.document':document}):
+            spec = importlib.util.spec_from_file_location('palette_controller',
+                Path(__file__).parents[1] / 'c4style/c4style/doctype/color_palette/color_palette.py')
+            module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+            record = module.ColorPalette()
+            record.get = lambda field:settings.PALETTES['Ocean'][field]
+            record.validate()
+            record.get = lambda field:'red;display:none'
+            with self.assertRaises(ValidationError): record.validate()
+            record.after_rename('Old name','New name')
+            self.assertEqual(json.loads(service.db.set_value.call_args.args[3]), {
+                'themePalette':'New name','menuCollapsed':True})
 
     def test_palette_only_api_applies_defaults_and_preserves_explicit_edits(self):
         fake.get_roles.return_value = ['Website Manager']

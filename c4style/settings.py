@@ -7,6 +7,28 @@ import frappe
 
 KEY = 'c4style_settings'
 PALETTES = json.loads(Path(__file__).with_name('palettes.json').read_text(encoding='utf-8'))
+
+
+@frappe.whitelist()
+def get_palettes():
+    if frappe.session.user == 'Guest':
+        frappe.throw('Please sign in', frappe.PermissionError)
+    fields = list(PALETTES['C4Style'])
+    return {row['name']: {field: row[field] for field in fields}
+            for row in frappe.get_all('Color Palette', filters={'enabled': 1},
+                                      fields=['name', *fields], order_by='name')}
+
+
+@frappe.whitelist()
+def get_palette(name):
+    if not isinstance(name, str):
+        frappe.throw('Select an enabled Color Palette')
+    palette = get_palettes().get(name)
+    if palette is None:
+        frappe.throw('Select an enabled Color Palette')
+    return palette
+
+
 DEFAULTS = dict(primary='#714B67', accent='#017E84', background='#E5E8EB',
                 fontSize=14, radius=6, density='comfortable', workspaceWide=False,
                 direction='auto', menuCollapsed=False, menuBackground='#FFFFFF',
@@ -48,7 +70,7 @@ def validate(settings):
         elif key == 'fontFamily':
             valid = value in ('system', 'arial', 'tahoma', 'georgia')
         elif key == 'themePalette':
-            valid = isinstance(value, str) and (value == '' or value in PALETTES)
+            valid = isinstance(value, str) and (value == '' or value in get_palettes())
         elif key == 'brandName':
             valid = isinstance(value, str) and 1 <= len(value.strip()) <= 80
         elif key in ('headerStyle', 'rowStyle', 'inputBorderStyle', 'fieldStyle', 'buttonStyle', 'shadowStyle', 'menuBehavior'):
@@ -86,7 +108,10 @@ def is_admin():
 def read_settings(user):
     raw = frappe.defaults.get_defaults_for(user).get(KEY)
     try:
-        return validate(raw) if raw else {}
+        values = json.loads(raw) if isinstance(raw, str) else raw
+        if isinstance(values, dict) and values.get('themePalette') not in get_palettes():
+            values.pop('themePalette', None)
+        return validate(values) if values else {}
     except (ValueError, TypeError, frappe.ValidationError):
         return {}
 
@@ -111,7 +136,7 @@ PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed', 'notes', 'them
 
 
 def document_settings(doc):
-    palette = PALETTES.get(doc.get('palette'), {})
+    palette = get_palettes().get(doc.get('palette'), {})
     values = {key: doc.get(field) if doc.get(field) not in (None, '') else palette.get(field, DEFAULTS[key])
               for key, field in SITE_FIELDS.items()}
     for key in ('menuDefaultCollapsed', 'showScrollButtons', 'nativeDrawers', 'enableAnnouncement', 'allowUserThemes'):
@@ -128,7 +153,7 @@ def boot_session(bootinfo):
     personal = read_settings(frappe.session.user)
     bootinfo.c4style = dict(site=get_site_settings(),
                            personal={k: v for k, v in personal.items() if k in PERSONAL_FIELDS},
-                           can_manage=is_admin())
+                           can_manage=is_admin(), palettes=get_palettes())
 
 
 @frappe.whitelist()
@@ -151,13 +176,13 @@ def save_settings(settings, scope='personal', palette=None):
         doc = frappe.get_single('Style Settings')
         doc.check_permission('write')
         if palette is not None:
-            choices = doc.meta.get_field('palette').options.split('\n')
-            if not isinstance(palette, str) or palette not in choices:
+            if not isinstance(palette, str):
                 frappe.throw('Invalid palette')
+            preset = get_palette(palette)
             doc.set('palette', palette)
             # Apply the entire preset; explicit manager edits win.
-            values = {**{key: PALETTES[palette][field] for key, field in SITE_FIELDS.items()
-                         if field in PALETTES.get(palette, {})}, **values}
+            values = {**{key: preset[field] for key, field in SITE_FIELDS.items()
+                         if field in preset}, **values}
         for key, value in values.items():
             if key in SITE_FIELDS:
                 doc.set(SITE_FIELDS[key], value)

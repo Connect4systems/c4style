@@ -1,4 +1,3 @@
-const c4style_palettes = frappe.c4style.palettes;
 function c4style_preview(frm) {
     const field = frm.fields_dict && frm.fields_dict.theme_preview;
     if (!field) return;
@@ -45,18 +44,26 @@ function c4style_preview(frm) {
     field.$wrapper.empty().append(panel);
 }
 const c4style_form_events = {
+    setup(frm) {
+        frm.set_query("palette", () => ({filters: {enabled: 1}}));
+    },
     refresh(frm) {
         frm.set_intro(__("Choose a palette, then customize its colors and typography. Save to apply it to everyone. Each user controls their own menu and workspace width."));
-        if (frm.add_custom_button && c4style_palettes[frm.doc.palette]) {
+        if (frm.add_custom_button && frm.doc.palette) {
             frm.add_custom_button(__("Reset palette colors"), async () => {
-                await frm.set_value(c4style_palettes[frm.doc.palette]);
+                const response = await frappe.call({method: "c4style.settings.get_palette", args: {name: frm.doc.palette}});
+                await frm.set_value(response.message);
                 c4style_preview(frm);
             });
         }
         c4style_preview(frm);
     },
     async palette(frm) {
-        const values = c4style_palettes[frm.doc.palette];
+        if (!frm.doc.palette) return;
+        const selected = frm.doc.palette;
+        const response = await frappe.call({method: "c4style.settings.get_palette", args: {name: selected}});
+        if (frm.doc.palette !== selected) return;
+        const values = response.message;
         if (values) {
             await frm.set_value(values);
             c4style_preview(frm);

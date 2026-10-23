@@ -62,7 +62,7 @@
     }
     function openPalettes(personalChoice = false) {
         if (personalChoice ? !api.get_theme().allowUserThemes : !(frappe.boot.c4style || {}).can_manage) return;
-        dialog(personalChoice ? "Choose my theme" : "Choose site theme", (body, element) => {
+        api.refresh_palettes(() => dialog(personalChoice ? "Choose my theme" : "Choose site theme", (body, element) => {
             const explanation = document.createElement("p");
             explanation.textContent = __(personalChoice ? "Choose a color palette for your account. Your preference is saved across refreshes." : "These palettes update the shared site theme. Confirm before applying a palette to all users.");
             const grid = document.createElement("div"); grid.className = "c4style-palette-grid";
@@ -96,7 +96,7 @@
                 choice.prepend(colors); grid.appendChild(choice);
             });
             body.append(explanation, grid);
-        });
+        }));
     }
     function saveNote(note, onSaved) {
         const notes = api.get_personal().notes || [];

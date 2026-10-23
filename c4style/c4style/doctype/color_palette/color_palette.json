@@ -1,0 +1,191 @@
+{
+ "doctype": "DocType",
+ "name": "Color Palette",
+ "module": "C4Style",
+ "autoname": "field:palette_name",
+ "allow_rename": 1,
+ "track_changes": 1,
+ "title_field": "palette_name",
+ "field_order": [
+  "palette_name",
+  "enabled",
+  "primary",
+  "accent",
+  "background",
+  "menu_background",
+  "menu_text",
+  "menu_active",
+  "navbar_background",
+  "navbar_text",
+  "panel_background",
+  "table_header_background",
+  "table_header_text",
+  "secondary_background",
+  "secondary_text",
+  "row_hover_background",
+  "row_border",
+  "input_background",
+  "input_border",
+  "announcement_background",
+  "announcement_color"
+ ],
+ "fields": [
+  {
+   "fieldname": "palette_name",
+   "label": "Palette name",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "enabled",
+   "label": "Enabled",
+   "fieldtype": "Check",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "primary",
+   "fieldtype": "Color",
+   "label": "Primary color",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accent",
+   "fieldtype": "Color",
+   "label": "Accent color",
+   "reqd": 1
+  },
+  {
+   "fieldname": "background",
+   "fieldtype": "Color",
+   "label": "Page background",
+   "reqd": 1
+  },
+  {
+   "fieldname": "menu_background",
+   "fieldtype": "Color",
+   "label": "Menu background",
+   "reqd": 1
+  },
+  {
+   "fieldname": "menu_text",
+   "fieldtype": "Color",
+   "label": "Menu text and icons",
+   "reqd": 1
+  },
+  {
+   "fieldname": "menu_active",
+   "fieldtype": "Color",
+   "label": "Selected menu item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "navbar_background",
+   "fieldtype": "Color",
+   "label": "Header background",
+   "reqd": 1
+  },
+  {
+   "fieldname": "navbar_text",
+   "fieldtype": "Color",
+   "label": "Header text and icons",
+   "reqd": 1
+  },
+  {
+   "fieldname": "panel_background",
+   "fieldtype": "Color",
+   "label": "Card and form background",
+   "reqd": 1
+  },
+  {
+   "fieldname": "table_header_background",
+   "fieldtype": "Color",
+   "label": "Table header background",
+   "reqd": 1
+  },
+  {
+   "fieldname": "table_header_text",
+   "fieldtype": "Color",
+   "label": "Table header text",
+   "reqd": 1
+  },
+  {
+   "fieldname": "secondary_background",
+   "fieldtype": "Color",
+   "label": "Secondary action background",
+   "reqd": 1
+  },
+  {
+   "fieldname": "secondary_text",
+   "fieldtype": "Color",
+   "label": "Secondary action text",
+   "reqd": 1
+  },
+  {
+   "fieldname": "row_hover_background",
+   "fieldtype": "Color",
+   "label": "Hovered row background",
+   "reqd": 1
+  },
+  {
+   "fieldname": "row_border",
+   "fieldtype": "Color",
+   "label": "List row border",
+   "reqd": 1
+  },
+  {
+   "fieldname": "input_background",
+   "fieldtype": "Color",
+   "label": "Input background",
+   "reqd": 1
+  },
+  {
+   "fieldname": "input_border",
+   "fieldtype": "Color",
+   "label": "Input border color",
+   "reqd": 1
+  },
+  {
+   "fieldname": "announcement_background",
+   "fieldtype": "Color",
+   "label": "Announcement background",
+   "reqd": 1,
+   "depends_on": "enable_announcement"
+  },
+  {
+   "fieldname": "announcement_color",
+   "fieldtype": "Color",
+   "label": "Announcement text color",
+   "reqd": 1,
+   "depends_on": "enable_announcement"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "rename": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1
+  },
+  {
+   "role": "Website Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "rename": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "name",
+ "sort_order": "ASC"
+}

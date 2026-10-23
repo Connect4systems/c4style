@@ -1,4 +1,5 @@
 """Browser checks for native settings and the per-user workspace menu."""
+import json
 from pathlib import Path
 import unittest
 try:
@@ -44,6 +45,15 @@ class MenuTests(unittest.TestCase):
                 pages: {}, show_alert: () => {},
                 ui: {form: {on: (name, events) => { window.formEvents = events; }}},
                 call(options) {
+                    if (options.method === 'c4style.settings.get_palettes') {
+                        if (options.callback) options.callback({message:frappe.boot.c4style.palettes});
+                        return;
+                    }
+                    if (options.method === 'c4style.settings.get_palette') {
+                        const response={message:frappe.boot.c4style.palettes[options.args.name]};
+                        if (options.callback) options.callback(response);
+                        return Promise.resolve(response);
+                    }
                     calls.push(options.args);
                     if (options.args.scope !== 'site') sessionStorage.setItem('test-personal', JSON.stringify({...frappe.c4style.get_personal(),...JSON.parse(options.args.settings)}));
                     if (options.callback) options.callback({message:{}});
@@ -53,6 +63,7 @@ class MenuTests(unittest.TestCase):
                 container: {add_page: () => ({})}
             };
         ''')
+        self.page.evaluate('values=>frappe.boot.c4style.palettes=values', json.loads((ROOT / 'c4style/palettes.json').read_text()))
         self.page.evaluate("frappe.boot.c4style.personal=JSON.parse(sessionStorage.getItem('test-personal') || '{}')")
         self.page.evaluate('values=>Object.assign(frappe.boot.c4style.site,values)', site or {})
         self.page.add_script_tag(content=(ROOT / 'c4style/public/js/c4style.js').read_text(encoding='utf-8'))
@@ -210,9 +221,25 @@ class MenuTests(unittest.TestCase):
 
     def test_palette_updates_site_and_menu_colors(self):
         self.page.add_script_tag(content=(ROOT / 'c4style/c4style/doctype/style_settings/style_settings.js').read_text(encoding='utf-8'))
-        self.page.evaluate('formEvents.palette({doc:{palette:"Ocean"}, set_value: values => {window.paletteValues = values;}})')
+        self.page.evaluate('async()=>await formEvents.palette({doc:{palette:"Ocean"}, set_value: values => {window.paletteValues = values;}})')
         self.assertEqual(self.page.evaluate('paletteValues.menu_background'), '#153747')
         self.assertEqual(self.page.evaluate('paletteValues.primary'), '#155E75')
+
+    def test_database_palette_changes_are_fetched_for_settings_and_personal_picker(self):
+        self.page.evaluate('''()=>{
+            const colors={...frappe.boot.c4style.palettes.Ocean,primary:'#123ABC'};
+            frappe.boot.c4style.palettes={'Company theme':colors};
+            frappe.c4style.apply_theme({allowUserThemes:true});
+        }''')
+        self.page.add_script_tag(content=(ROOT / 'c4style/c4style/doctype/style_settings/style_settings.js').read_text())
+        self.page.evaluate('''async()=>await formEvents.palette({doc:{palette:'Company theme'},
+            set_value:values=>{window.paletteValues=values;}})''')
+        self.assertEqual(self.page.evaluate('paletteValues.primary'),'#123ABC')
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='Choose my theme',exact=True).click()
+        self.assertEqual(self.page.get_by_role('button',name='Ocean',exact=True).count(),0)
+        self.page.get_by_role('button',name='Company theme',exact=True).click()
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'),'#123ABC')
 
     def test_breadcrumbs_allow_unresolved_startup_route(self):
         self.page.evaluate('''() => {
@@ -305,7 +332,7 @@ class MenuTests(unittest.TestCase):
 
     def test_lime_palette_coordinates_header_menu_and_table(self):
         self.page.add_script_tag(content=(ROOT / 'c4style/c4style/doctype/style_settings/style_settings.js').read_text(encoding='utf-8'))
-        self.page.evaluate('formEvents.palette({doc:{palette:"Lime Fresh"},set_value:values=>{window.paletteValues=values;}})')
+        self.page.evaluate('async()=>await formEvents.palette({doc:{palette:"Lime Fresh"},set_value:values=>{window.paletteValues=values;}})')
         self.assertEqual(self.page.evaluate('paletteValues.navbar_background'), '#3F6212')
         self.assertEqual(self.page.evaluate('paletteValues.table_header_background'), '#3F6212')
         self.assertEqual(self.page.evaluate('paletteValues.menu_background'), '#365314')
@@ -400,7 +427,7 @@ class MenuTests(unittest.TestCase):
 
     def test_failed_personal_theme_save_restores_site_colors(self):
         self.page.evaluate('frappe.c4style.apply_theme({allowUserThemes:true,primary:"#112233"})')
-        self.page.evaluate('()=>{frappe.call=options=>{options.error();options.always();};}')
+        self.page.evaluate('()=>{frappe.call=options=>{if(options.method === "c4style.settings.get_palettes"){options.callback({message:frappe.boot.c4style.palettes});return;}options.error();options.always();};}')
         self.page.get_by_role('button',name='Appearance tools',exact=True).click()
         self.page.get_by_role('button',name='Choose my theme',exact=True).click()
         self.page.get_by_role('button',name='Ocean',exact=True).click()
@@ -463,7 +490,7 @@ class MenuTests(unittest.TestCase):
 
     def test_failed_note_minimize_and_delete_preserve_the_note(self):
         self.page.evaluate('frappe.c4style.save_personal("notes",[{id:"one",text:"Keep this",color:"mint"}])')
-        self.page.evaluate('()=>{frappe.call=options=>{options.error();options.always();};}')
+        self.page.evaluate('()=>{frappe.call=options=>{if(options.method === "c4style.settings.get_palettes"){options.callback({message:frappe.boot.c4style.palettes});return;}options.error();options.always();};}')
         note = self.page.locator('.c4style-note-window')
         note.get_by_role('button',name='Minimize',exact=True).click()
         self.assertTrue(note.get_by_role('textbox').is_visible())
@@ -478,7 +505,7 @@ class MenuTests(unittest.TestCase):
         self.page.evaluate('frappe.c4style.save_personal("notes",[{id:"one",text:"Keep this",color:"mint"}])')
         self.page.get_by_role('button',name='Appearance tools',exact=True).click()
         self.page.get_by_role('button',name='My sticky notes',exact=True).click()
-        self.page.evaluate('()=>{frappe.call=options=>{options.error();options.always();};}')
+        self.page.evaluate('()=>{frappe.call=options=>{if(options.method === "c4style.settings.get_palettes"){options.callback({message:frappe.boot.c4style.palettes});return;}options.error();options.always();};}')
         editor = self.page.get_by_role('dialog',name='My sticky notes')
         editor.get_by_role('button',name='Minimize',exact=True).click()
         self.assertTrue(editor.get_by_role('textbox').is_visible())

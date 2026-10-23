@@ -74,3 +74,19 @@ Add `--local-assets` only when deliberately testing local public files against t
 Create notifications manually using Frappe's Notification form. C4Style's workflow
 notification extension has been removed; Administration handles approval actions.
 After upgrading, run site migration to remove the retired custom controls.
+
+#### Color palettes
+
+System Manager and Website Manager can manage **Color Palette** records, including
+adding, editing, renaming, deleting and enabling them. Only enabled records are
+offered in Style Settings and Appearance tools. Selecting a palette fetches its
+saved colors; site colors can still be customized afterward. Personal selection
+also requires **Users can choose their theme** in Style Settings.
+
+Run site migration after upgrading. It creates the DocType, converts the palette
+selector to a Link and imports the existing 17 palettes once. Future migrations
+preserve edited, renamed and deleted records. Disabling or deleting a personal
+palette restores the shared theme on refresh. Existing shared colors remain saved
+until a manager selects a palette again or edits them. Rename preserves personal
+selections. Manual colors previously selected as Custom are preserved with an
+empty palette Link.

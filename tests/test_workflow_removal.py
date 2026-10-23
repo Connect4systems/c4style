@@ -16,7 +16,7 @@ class WorkflowRemovalTests(unittest.TestCase):
         self.assertNotIn('override_whitelisted_methods', hooks)
         self.assertNotIn('doc_events', hooks)
         self.assertNotIn('doctype_js', hooks)
-        self.assertNotIn('after_install', hooks)
+        self.assertEqual(hooks['after_install'], 'c4style.install_palettes.execute')
         self.assertEqual(hooks['after_migrate'], 'c4style.remove_workflow_notifications.execute')
 
     def test_cleanup_only_removes_owned_field_metadata_and_can_repeat(self):

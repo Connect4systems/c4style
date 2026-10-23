@@ -1,3 +1,12 @@
+from hashlib import sha256 as _sha256
+from pathlib import Path as _Path
+
+
+def _asset_url(relative_path):
+    content = (_Path(__file__).parent / "public" / relative_path).read_bytes()
+    return f"/assets/c4style/{relative_path}?v={_sha256(content).hexdigest()[:12]}"
+
+
 app_name = "c4style"
 app_title = "C4Style"
 app_publisher = "Connect 4 Systems"
@@ -10,8 +19,8 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = "/assets/c4style/css/c4style.css"
-app_include_js = ["/assets/c4style/js/c4style.js", "/assets/c4style/js/desk_tools.js"]
+app_include_css = _asset_url("css/c4style.css")
+app_include_js = [_asset_url("js/c4style.js"), _asset_url("js/desk_tools.js")]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/c4style/css/c4style.css"

@@ -10,6 +10,7 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--base-url',required=True)
     parser.add_argument('--session-file',required=True)
+    parser.add_argument('--local-assets',action='store_true',help='Override deployed assets only when explicitly requested')
     parser.add_argument('--output',default='artifacts/menu-review')
     args=parser.parse_args()
     output=Path(args.output);output.mkdir(parents=True,exist_ok=True)
@@ -23,7 +24,8 @@ def main():
             if path.is_relative_to((ROOT/'c4style/public').resolve()) and path.is_file():
                 route.fulfill(body=path.read_bytes(),content_type='text/css' if path.suffix=='.css' else 'application/javascript')
             else: route.continue_()
-        context.route('**/assets/c4style/**',assets)
+        if args.local_assets:
+            context.route('**/assets/c4style/**',assets)
         page=context.new_page();page.set_default_timeout(15000)
         page.on('pageerror',lambda e:errors.append(str(e)))
         def check(name,fn):
@@ -53,9 +55,11 @@ def main():
             return dict(edge_x=box['x'],collapsed_width=box['width'],hover_width=236,route=href,legacy_menu_flag=page.evaluate('frappe.boot.c4style.site.persistentMenu'))
         check('edge position, hover, saved menu colors and workspace navigation',navigation)
         def announcement():
-            page.evaluate('frappe.c4style.apply_theme({enableAnnouncement:true,announcementText:"Announcement stays visible",announcementSpeed:25})')
+            if args.local_assets:
+                page.evaluate('frappe.c4style.apply_theme({enableAnnouncement:true,announcementText:"Announcement stays visible",announcementSpeed:25})')
             message=page.locator('.c4style-announcement-message')
             assert message.is_visible()
+            assert message.inner_text()==page.evaluate('frappe.c4style.get_theme().announcementText')
             assert message.evaluate('e=>getComputedStyle(e).animationName')=='none'
             assert message.evaluate('e=>{const a=e.getBoundingClientRect(),b=e.parentElement.getBoundingClientRect();return a.left>=b.left&&a.right<=b.right+1;}')
             page.screenshot(path=str(output/'announcement.png'))
@@ -87,7 +91,7 @@ def main():
             return dict(routes=2,mobile_width=390)
         check('edge menu on list and form routes and mobile overflow',route_checks)
         assert page.evaluate('JSON.stringify(frappe.boot.c4style)')==snapshot
-        (output/'report.json').write_text(json.dumps(dict(base_url=args.base_url,local_asset_override=True,shared_settings_unchanged=True,checks=checks,browser_errors=errors),indent=2))
+        (output/'report.json').write_text(json.dumps(dict(base_url=args.base_url,local_asset_override=args.local_assets,shared_settings_unchanged=True,checks=checks,browser_errors=errors),indent=2))
         browser.close()
     if errors or any(not c['passed'] for c in checks):raise SystemExit(1)
 

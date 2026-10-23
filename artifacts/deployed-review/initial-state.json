@@ -1,0 +1,140 @@
+{
+  "state": {
+    "url": "https://oro.connect4systems.com/app/home",
+    "boot": {
+      "can_manage": true,
+      "personal": {
+        "direction": "ltr",
+        "menuCollapsed": true,
+        "workspaceWide": true
+      },
+      "site": {
+        "accent": "#16A34A",
+        "announcementBackground": "#F0FDF4",
+        "announcementColor": "#14532D",
+        "announcementSpeed": 25,
+        "announcementText": "test",
+        "background": "#F0FDF4",
+        "brandName": "ORO",
+        "buttonStyle": "filled",
+        "density": "comfortable",
+        "direction": "auto",
+        "enableAnnouncement": true,
+        "fieldStyle": "boxed",
+        "fontFamily": "arial",
+        "fontSize": 14,
+        "headerStyle": "pill",
+        "inputBackground": "#FFFFFF",
+        "inputBorder": "#A9B49F",
+        "inputBorderStyle": "dashed",
+        "menuActive": "#166534",
+        "menuBackground": "#14532D",
+        "menuBehavior": "hover",
+        "menuCollapsed": false,
+        "menuDefaultCollapsed": true,
+        "menuText": "#F0FDF4",
+        "nativeDrawers": true,
+        "navbarBackground": "#14532D",
+        "navbarText": "#FFFFFF",
+        "notes": [],
+        "panelBackground": "#FFFFFF",
+        "primary": "#14532D",
+        "radius": 10,
+        "rowBorder": "#CAD3C4",
+        "rowHoverBackground": "#F0FDF4",
+        "rowStyle": "separated",
+        "secondaryBackground": "#A58F7A",
+        "secondaryText": "#FFFFFF",
+        "shadowStyle": "soft",
+        "showScrollButtons": true,
+        "tableHeaderBackground": "#14532D",
+        "tableHeaderText": "#FFFFFF",
+        "textDirection": "auto",
+        "workspaceWide": false
+      }
+    },
+    "runtime": {
+      "accent": "#16A34A",
+      "announcementBackground": "#F0FDF4",
+      "announcementColor": "#14532D",
+      "announcementSpeed": 25,
+      "announcementText": "test",
+      "background": "#F0FDF4",
+      "brandName": "ORO",
+      "buttonStyle": "filled",
+      "density": "comfortable",
+      "direction": "auto",
+      "enableAnnouncement": true,
+      "fieldStyle": "boxed",
+      "fontFamily": "arial",
+      "fontSize": 14,
+      "headerStyle": "pill",
+      "inputBackground": "#FFFFFF",
+      "inputBorder": "#A9B49F",
+      "inputBorderStyle": "dashed",
+      "menuActive": "#166534",
+      "menuBackground": "#14532D",
+      "menuBehavior": "hover",
+      "menuCollapsed": false,
+      "menuDefaultCollapsed": true,
+      "menuText": "#F0FDF4",
+      "nativeDrawers": true,
+      "navbarBackground": "#14532D",
+      "navbarText": "#FFFFFF",
+      "notes": [],
+      "panelBackground": "#FFFFFF",
+      "primary": "#14532D",
+      "radius": 10,
+      "rowBorder": "#CAD3C4",
+      "rowHoverBackground": "#F0FDF4",
+      "rowStyle": "separated",
+      "secondaryBackground": "#A58F7A",
+      "secondaryText": "#FFFFFF",
+      "shadowStyle": "soft",
+      "showScrollButtons": true,
+      "tableHeaderBackground": "#14532D",
+      "tableHeaderText": "#FFFFFF",
+      "textDirection": "auto",
+      "workspaceWide": false
+    },
+    "body": "c4style-menu-collapsed c4style-workspace-wide c4style-has-app-menu c4style-native-drawers",
+    "menu": [
+      {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 72,
+          "height": 1025,
+          "top": 0,
+          "right": 72,
+          "bottom": 1025,
+          "left": 0
+        },
+        "background": "rgb(20, 83, 45)"
+      }
+    ],
+    "scripts": [
+      "https://oro.connect4systems.com/assets/c4style/js/c4style.js",
+      "https://oro.connect4systems.com/assets/c4style/js/desk_tools.js"
+    ],
+    "css": [
+      "https://oro.connect4systems.com/assets/c4style/css/c4style.css"
+    ],
+    "old_settings_button": false
+  },
+  "errors": [],
+  "responses": [
+    {
+      "url": "https://oro.connect4systems.com/assets/c4style/css/c4style.css",
+      "status": 200
+    },
+    {
+      "url": "https://oro.connect4systems.com/assets/c4style/js/c4style.js",
+      "status": 200
+    },
+    {
+      "url": "https://oro.connect4systems.com/assets/c4style/js/desk_tools.js",
+      "status": 200
+    }
+  ]
+}

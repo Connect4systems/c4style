@@ -41,6 +41,8 @@ bench --site your-site clear-cache
 bench restart
 ```
 
+Desk asset URLs now include a content fingerprint so changed CSS/JavaScript files get new browser cache keys after deployment. Clear the site cache and restart workers after deploying hook changes.
+
 Hard-refresh the browser. Migration installs the Single DocType and the C4Style workspace shortcut. Existing `/app/c4style-settings` bookmarks redirect to the native form.
 
 The visual direction is inspired by the [Kanak Infosystems theme walkthrough](https://www.youtube.com/watch?v=B_0SsIDih1k). This app implements its own styles and navigation; it does not include the vendor's theme code.
@@ -58,3 +60,11 @@ python -B tests/run_regression_review.py --base-url https://your-site --session-
 ```
 
 This check temporarily saves shared style options and restores the original settings in `finally`, then verifies them after reload. It does not deploy local app files. Use a test site or an agreed testing window.
+
+To check the actual deployed assets without overriding them:
+
+```sh
+python -B tests/run_menu_review.py --base-url https://your-site --session-file /temporary/session.json --output artifacts/deployed-review
+```
+
+Add `--local-assets` only when deliberately testing local public files against the live server. The default performs read-only checks of deployed files.

@@ -115,7 +115,7 @@ def main():
 
         # Restore a consistent visual reference between independent scenarios.
         baseline = page.evaluate('frappe.c4style.palette_settings("Lime Fresh")')
-        baseline.update(headerStyle='pill', rowStyle='separated', inputBorderStyle='dashed', fieldStyle='boxed', buttonStyle='filled', shadowStyle='soft', menuBehavior='click', fontFamily='arial', fontSize=14, radius=10, nativeDrawers=True, showScrollButtons=True, persistentMenu=True)
+        baseline.update(headerStyle='pill', rowStyle='separated', inputBorderStyle='dashed', fieldStyle='boxed', buttonStyle='filled', shadowStyle='soft', menuBehavior='click', fontFamily='arial', fontSize=14, radius=10, nativeDrawers=True, showScrollButtons=True)
         save_site(baseline)
         save_personal({'direction': 'ltr', 'workspaceWide': True, 'menuCollapsed': True})
         page.reload(wait_until='domcontentloaded', timeout=60000)

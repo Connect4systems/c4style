@@ -28,7 +28,6 @@
   "navigation_tab",
   "navigation_section",
   "brand_name",
-  "persistent_menu",
   "font_family",
   "text_direction",
   "menu_default_collapsed",
@@ -207,13 +206,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "persistent_menu",
-   "fieldtype": "Check",
-   "label": "Show workspace menu on every Desk page",
-   "default": "1",
-   "description": "Uses only workspaces already permitted for the signed-in user."
-  },
-  {
    "fieldname": "font_family",
    "fieldtype": "Select",
    "label": "Font family",
@@ -233,7 +225,8 @@
    "fieldname": "menu_default_collapsed",
    "fieldtype": "Check",
    "label": "Start new users with an icon-only menu",
-   "default": "1"
+   "default": "1",
+   "description": "Applies only to users who have not saved their own menu width."
   },
   {
    "fieldname": "menu_behavior",
@@ -241,7 +234,8 @@
    "label": "Collapsed menu behavior",
    "default": "hover",
    "options": "hover\nclick",
-   "reqd": 1
+   "reqd": 1,
+   "description": "Hover expands the icon rail without changing your saved menu width."
   },
   {
    "fieldname": "show_scroll_buttons",
@@ -366,28 +360,32 @@
    "fieldtype": "Small Text",
    "label": "Announcement text",
    "description": "Plain text only. Users can dismiss this message for the current page session.",
-   "default": ""
+   "default": "",
+   "depends_on": "enable_announcement"
   },
   {
    "fieldname": "announcement_speed",
    "fieldtype": "Int",
    "label": "Scroll duration (5 to 120 seconds)",
    "reqd": 1,
-   "default": 24
+   "default": 24,
+   "depends_on": "enable_announcement"
   },
   {
    "fieldname": "announcement_background",
    "fieldtype": "Color",
    "label": "Announcement background",
    "reqd": 1,
-   "default": "#F0EDF7"
+   "default": "#F0EDF7",
+   "depends_on": "enable_announcement"
   },
   {
    "fieldname": "announcement_color",
    "fieldtype": "Color",
    "label": "Announcement text color",
    "reqd": 1,
-   "default": "#36414C"
+   "default": "#36414C",
+   "depends_on": "enable_announcement"
   },
   {
    "fieldname": "preview_tab",

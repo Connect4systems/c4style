@@ -110,6 +110,14 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(doc['issingle'], 1)
         self.assertEqual({p['role'] for p in doc['permissions']}, {'System Manager', 'Website Manager'})
 
+    def test_every_settings_control_has_a_server_mapping(self):
+        path = Path(__file__).parents[1] / 'c4style/c4style/doctype/style_settings/style_settings.json'
+        schema = json.loads(path.read_text())
+        controls = {field['fieldname'] for field in schema['fields']
+                    if field['fieldtype'] not in ('Tab Break', 'Section Break', 'Column Break', 'HTML')}
+        self.assertEqual(controls, set(settings.SITE_FIELDS.values()) | {'palette'})
+        self.assertNotIn('persistent_menu', schema['field_order'])
+
     def test_missing_colors_follow_selected_palette(self):
         self.doc.get.side_effect = lambda field: {'palette': 'Wine', 'primary': '#123456'}.get(field)
         values = settings.document_settings(self.doc)

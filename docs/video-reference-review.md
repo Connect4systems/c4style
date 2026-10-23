@@ -42,3 +42,10 @@ An authenticated regression run against oro.connect4systems.com used browser-loc
 The follow-up fixes the persistent menu's inner background overriding its palette, adds announcement colors to every preset, handles an unresolved startup route and delayed boot initialization, and provides a native reset-preset action. Python changes add preset defaults for palette-only API saves and missing document colors; those changes are covered locally and still require deployment before they can be verified on the server.
 
 The video could not be fetched again because YouTube throttled the request. This follow-up uses the existing storyboard comparison above and the supplied settings screenshot, rather than claiming a new full-video review.
+
+
+## Menu follow-up
+
+The disabled legacy menu mode was reproduced on the deployed site. It used a native workspace sidebar about 90px from the viewport edge. The obsolete mode switch is now removed in favor of the consistent edge menu. Menu icon tokens and expanded-menu/header stacking were corrected. Short announcements no longer animate outside the visible strip; only overflowing text scrolls, with the text covering the viewport throughout the movement.
+
+Read-only authenticated follow-up checks passed for the actual disabled legacy state, hover expansion and colors, all three notification categories, close/Escape handling, workspace/list/form placement and mobile overflow. Native notifications showed an empty state for the test account; notification delivery itself was not tested. See `artifacts/menu-review/report.json` and the complete field audit in `docs/settings-field-audit.md`.

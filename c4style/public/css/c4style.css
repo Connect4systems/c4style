@@ -567,7 +567,7 @@ body.c4style-has-app-menu.c4style-menu-collapsed { --c4style-app-menu-width: 72p
     background: var(--c4style-menu-bg);
     color: var(--c4style-menu-text);
     border-inline-end: 1px solid rgb(128 128 128 / 15%);
-    z-index: 1030;
+    z-index: 1042;
     overflow: auto;
     overscroll-behavior: contain;
 }
@@ -717,7 +717,8 @@ body[data-button-style] .custom-actions .btn.btn-default {
     border: 1px solid var(--c4style-secondary-bg) !important;
 }
 body[data-button-style="outline"] .btn.btn-default,
-body[data-button-style="outline"] .standard-actions .btn.btn-secondary {
+body[data-button-style="outline"] .standard-actions .btn.btn-secondary,
+body[data-button-style="outline"] .custom-actions .btn.btn-default {
     background: transparent !important;
     color: var(--c4style-secondary-bg) !important;
 }
@@ -768,11 +769,11 @@ body[data-button-style] .c4style-palette-choice { display: grid; gap: 12px; padd
 .c4style-app-tile[hidden] { display: none; }
 .c4style-announcement { position: sticky; top: 0; display: flex; gap: 12px; min-height: 30px; align-items: center; background: var(--c4style-announcement-bg); color: var(--c4style-announcement-text); z-index: 1025; padding-inline: 20px 8px; }
 .c4style-announcement-viewport { flex: 1; min-width: 0; overflow: hidden; }
-.c4style-announcement-message { display: block; width: max-content; min-width: 100%; white-space: nowrap; animation: c4style-announcement-scroll var(--c4style-announcement-duration, 24s) linear infinite; }
+.c4style-announcement-message { display: block; width: max-content; min-width: 100%; white-space: nowrap; }
+.c4style-announcement-overflow .c4style-announcement-message { animation: c4style-announcement-scroll var(--c4style-announcement-duration, 24s) linear infinite alternate; }
 .c4style-announcement:hover .c4style-announcement-message, .c4style-announcement:focus-within .c4style-announcement-message { animation-play-state: paused; }
 .c4style-announcement-close { border: 0; background: transparent; color: inherit; font-size: 20px; line-height: 1; min-width: 28px; min-height: 28px; }
-@keyframes c4style-announcement-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
-[dir="rtl"] .c4style-announcement-message { animation-direction: reverse; }
+@keyframes c4style-announcement-scroll { from { transform: translateX(0); } to { transform: translateX(var(--c4style-announcement-travel, 0px)); } }
 .c4style-native-drawer-header { display: none; }
 body.c4style-native-drawers .navbar { z-index: 1040; }
 body.c4style-native-drawers :is(.dropdown-notifications, .dropdown-navbar-user) > .dropdown-menu.show {
@@ -801,6 +802,7 @@ body.c4style-native-drawers .c4style-native-drawer-header { display: flex; align
 body.c4style-native-drawers #toolbar-user .dropdown-item { padding: 12px 24px; white-space: normal; }
 body.c4style-native-drawers .notification-list-body { max-height: calc(100dvh - 125px); }
 .c4style-drawer-backdrop { position: fixed; inset: 0; background: rgb(20 25 20 / 35%); z-index: 1035; }
+body.c4style-drawer-open .c4style-app-menu { z-index: 1030; }
 .c4style-notes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
 .c4style-note { display: grid; gap: 10px; padding: 16px; border-radius: 4px 4px 14px 4px; box-shadow: 0 5px 12px rgb(0 0 0 / 10%); }
 .c4style-note[data-color="sun"] { background: #fff1ab; }
@@ -901,6 +903,10 @@ body.c4style-compact .form-layout .frappe-control { padding-block: 6px; }
 .desk-sidebar .standard-sidebar-item:is(:hover, :focus-within) .item-anchor {
     background: var(--c4style-menu-active) !important;
     color: var(--c4style-menu-text) !important;
+}
+.desk-sidebar :is(.icon, .es-icon) {
+    --icon-stroke: var(--c4style-menu-text);
+    --icon-fill: var(--c4style-menu-text);
 }
 body[data-menu-behavior="hover"].c4style-menu-collapsed:not(.c4style-has-app-menu) .c4style-menu-section:is(:hover, :focus-within) {
     flex-basis: 236px !important;

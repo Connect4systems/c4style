@@ -499,7 +499,7 @@
     function syncNavigation() {
         const workspaces = (frappe.boot && frappe.boot.allowed_workspaces) || [];
         const existing = document.querySelector(".c4style-app-menu");
-        if (!theme.persistentMenu || !workspaces.length) {
+        if (!workspaces.length) {
             if (existing) existing.remove();
             document.body.classList.remove("c4style-has-app-menu");
             return;

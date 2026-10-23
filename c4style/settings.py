@@ -13,7 +13,7 @@ DEFAULTS = dict(primary='#714B67', accent='#017E84', background='#E5E8EB',
                 menuText='#36414C', menuActive='#E5F1F1',
                 navbarBackground='#714B67', navbarText='#FFFFFF', panelBackground='#FFFFFF',
                 tableHeaderBackground='#714B67', tableHeaderText='#FFFFFF',
-                fontFamily='system', textDirection='auto', persistentMenu=True, brandName='C4Style',
+                fontFamily='system', textDirection='auto', brandName='C4Style',
                 headerStyle='pill', rowStyle='separated', inputBorderStyle='dashed',
                 fieldStyle='boxed', buttonStyle='filled', shadowStyle='soft', menuBehavior='hover',
                 secondaryBackground='#A58F7A', secondaryText='#FFFFFF',
@@ -66,7 +66,7 @@ def validate(settings):
             )
             if valid:
                 valid = len({note['id'] for note in value}) == len(value) and len(json.dumps(value).encode('utf-8')) <= 48000
-        elif key in ('workspaceWide', 'menuCollapsed', 'persistentMenu', 'menuDefaultCollapsed',
+        elif key in ('workspaceWide', 'menuCollapsed', 'menuDefaultCollapsed',
                      'showScrollButtons', 'nativeDrawers', 'enableAnnouncement'):
             valid = type(value) is bool
         if not valid:
@@ -92,7 +92,7 @@ SITE_FIELDS = dict(primary='primary', accent='accent', background='background',
                    navbarBackground='navbar_background', navbarText='navbar_text',
                    panelBackground='panel_background', tableHeaderBackground='table_header_background',
                    tableHeaderText='table_header_text', fontFamily='font_family',
-                   textDirection='text_direction', persistentMenu='persistent_menu', brandName='brand_name',
+                   textDirection='text_direction', brandName='brand_name',
                    headerStyle='header_style', rowStyle='row_style', inputBorderStyle='input_border_style',
                    fieldStyle='field_style', buttonStyle='button_style', shadowStyle='shadow_style',
                    menuBehavior='menu_behavior', secondaryBackground='secondary_background',
@@ -109,7 +109,7 @@ def document_settings(doc):
     palette = PALETTES.get(doc.get('palette'), {})
     values = {key: doc.get(field) if doc.get(field) not in (None, '') else palette.get(field, DEFAULTS[key])
               for key, field in SITE_FIELDS.items()}
-    for key in ('persistentMenu', 'menuDefaultCollapsed', 'showScrollButtons', 'nativeDrawers', 'enableAnnouncement'):
+    for key in ('menuDefaultCollapsed', 'showScrollButtons', 'nativeDrawers', 'enableAnnouncement'):
         if values[key] in (0, 1):
             values[key] = bool(values[key])
     return values

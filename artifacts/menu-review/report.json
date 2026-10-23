@@ -1,0 +1,43 @@
+{
+  "base_url": "https://oro.connect4systems.com",
+  "local_asset_override": true,
+  "shared_settings_unchanged": true,
+  "checks": [
+    {
+      "name": "edge position, hover, saved menu colors and workspace navigation",
+      "passed": true,
+      "detail": {
+        "edge_x": 0,
+        "collapsed_width": 72,
+        "hover_width": 236,
+        "route": "/app/stock",
+        "legacy_menu_flag": false
+      }
+    },
+    {
+      "name": "short announcement remains visible without blank animation intervals",
+      "passed": true,
+      "detail": {
+        "short_text_visible": true
+      }
+    },
+    {
+      "name": "native notification tabs, drawer controls and user menu",
+      "passed": true,
+      "detail": {
+        "notification_tabs": 3,
+        "user_drawer": true,
+        "close": true
+      }
+    },
+    {
+      "name": "edge menu on list and form routes and mobile overflow",
+      "passed": true,
+      "detail": {
+        "routes": 2,
+        "mobile_width": 390
+      }
+    }
+  ],
+  "browser_errors": []
+}

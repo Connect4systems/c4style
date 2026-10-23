@@ -164,12 +164,12 @@ class MenuTests(unittest.TestCase):
         self.page.get_by_role('button', name='Switch to left-to-right').click()
         self.assertEqual(self.page.locator('html').get_attribute('dir'), 'ltr')
 
-    def test_persistent_menu_can_be_disabled_without_losing_native_controls(self):
+    def test_obsolete_menu_switch_cannot_disable_the_edge_menu(self):
         self.enable_app_menu()
         self.page.evaluate('frappe.c4style.apply_theme({persistentMenu:false})')
-        self.assertEqual(self.page.locator('.c4style-app-menu').count(), 0)
-        self.assertTrue(self.page.locator('.layout-side-section').is_visible())
-        self.assertTrue(self.page.get_by_role('button', name='Narrow menu', exact=True).is_visible())
+        self.assertTrue(self.page.locator('.c4style-app-menu').is_visible())
+        self.assertFalse(self.page.locator('.layout-side-section').is_visible())
+        self.assertAlmostEqual(self.page.locator('.c4style-app-menu').bounding_box()['x'], 0, delta=1)
 
     def test_lime_palette_coordinates_header_menu_and_table(self):
         self.page.add_script_tag(content=(ROOT / 'c4style/c4style/doctype/style_settings/style_settings.js').read_text(encoding='utf-8'))
@@ -201,6 +201,22 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.locator('.c4style-announcement').count(),0)
         self.page.evaluate('frappe.c4style.sync_tools()')
         self.assertEqual(self.page.locator('.c4style-announcement').count(),0)
+
+    def test_short_announcement_stays_visible_throughout_the_duration(self):
+        self.page.evaluate('frappe.c4style.apply_theme({enableAnnouncement:true,announcementText:"Visible now",announcementSpeed:25})')
+        message = self.page.locator('.c4style-announcement-message')
+        self.assertEqual(message.evaluate('(el)=>getComputedStyle(el).animationName'), 'none')
+        self.assertTrue(message.evaluate('el=>{const a=el.getBoundingClientRect(),b=el.parentElement.getBoundingClientRect();return a.left>=b.left && a.top>=b.top;}'))
+
+    def test_long_announcement_moves_without_leaving_an_empty_viewport(self):
+        self.page.evaluate('frappe.c4style.apply_theme({enableAnnouncement:true,announcementText:"Long announcement ".repeat(40),announcementSpeed:25})')
+        message = self.page.locator('.c4style-announcement-message')
+        for time in (0, 12500, 25000, 37500):
+            self.assertTrue(message.evaluate('''(el,time)=>{
+                const animation=el.getAnimations()[0];animation.pause();animation.currentTime=time;
+                const a=el.getBoundingClientRect(),b=el.parentElement.getBoundingClientRect();
+                return a.left<=b.left+1 && a.right>=b.right-1;
+            }''',time))
 
     def test_normal_user_tools_do_not_offer_shared_theme_edits(self):
         self.page.get_by_role('button',name='Appearance tools',exact=True).click()

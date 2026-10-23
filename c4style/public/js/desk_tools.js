@@ -207,6 +207,10 @@
         if (message.textContent !== text) message.textContent = text;
         const duration = theme.announcementSpeed;
         strip.style.setProperty("--c4style-announcement-duration", `${duration >= 5 && duration <= 120 ? duration : 24}s`);
+        const viewport = strip.querySelector(".c4style-announcement-viewport");
+        const overflow = Math.max(0, message.scrollWidth - viewport.clientWidth);
+        strip.classList.toggle("c4style-announcement-overflow", overflow > 0);
+        strip.style.setProperty("--c4style-announcement-travel", `${document.documentElement.dir === "rtl" ? overflow : -overflow}px`);
         document.documentElement.style.setProperty("--c4style-announcement-height", `${strip.offsetHeight}px`);
     }
     function syncBreadcrumbs() {
@@ -267,6 +271,7 @@
     }
     function updateDrawerBackdrop() {
         const active = api.get_theme().nativeDrawers && document.querySelector(".dropdown-notifications.show, .dropdown-navbar-user.show, .dropdown-notifications > .dropdown-menu.show, .dropdown-navbar-user > .dropdown-menu.show");
+        document.body.classList.toggle("c4style-drawer-open", !!active);
         const existing = document.querySelector(".c4style-drawer-backdrop");
         if (active && !existing) {
             const backdrop = document.createElement("div"); backdrop.className = "c4style-drawer-backdrop";
@@ -365,7 +370,7 @@
     api.open_launcher = openLauncher;
     function start() {
         syncTools();
-        window.addEventListener("resize", measureHeader);
+        window.addEventListener("resize", () => { syncAnnouncement(); measureHeader(); });
         document.addEventListener("keydown", event => { if (event.key === "Escape") closeNativeDrawer(); });
         // Batch route-created navbar/menu work. Child mutations do not re-run synchronously.
         let queued = false;

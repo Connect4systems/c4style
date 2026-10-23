@@ -928,3 +928,6 @@ body[data-menu-behavior="hover"].c4style-menu-collapsed:not(.c4style-has-app-men
 .c4style-notification-toast p { margin-block: 10px; overflow-wrap: anywhere; }
 .c4style-notification-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 @media print { .c4style-notification-toast { display: none !important; } }
+
+.c4style-transition-actions { display: flex; flex-wrap: wrap; align-items: center; column-gap: 18px; }
+.c4style-transition-actions > .frappe-control { margin-bottom: 12px; }

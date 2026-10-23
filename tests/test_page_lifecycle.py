@@ -199,6 +199,56 @@ class MenuTests(unittest.TestCase):
         self.assertTrue(self.page.locator('.sidebar-item-label').is_visible())
         self.assertEqual(self.page.evaluate('JSON.parse(calls[0].settings)'), {'menuCollapsed': True})
 
+    def load_workflow_fixture(self):
+        self.page.evaluate('''()=>{
+            window.workflowHandlers={};window.workflowCalls=[];
+            frappe.ui.form.on=(name,events)=>{workflowHandlers[name]=events;};
+            frappe.msgprint=message=>{window.workflowMessage=message;};
+            frappe.call=options=>{workflowCalls.push(options.args);options.callback({message:window.workflowResponse});};
+            frappe.model={
+                with_doctype:(name,callback)=>callback(),
+                get_new_doc:()=>{window.newNotification={doctype:'Notification',name:'new-notification-1',recipients:[]};return newNotification;},
+                add_child:(doc,doctype,field)=>{const row={doctype};doc[field].push(row);return row;}
+            };
+            window.workflowForm={doc:{name:'Approval'},is_new:()=>false,is_dirty:()=>false,fields_dict:{}};
+        }''')
+        self.page.add_script_tag(content=(ROOT/'c4style/public/js/workflow_notifications.js').read_text())
+
+    def test_workflow_button_opens_unsaved_prefilled_notification_or_existing_rule(self):
+        self.load_workflow_fixture()
+        self.page.evaluate('''()=>{
+            workflowResponse={defaults:{channel:'System Notification',event:'Custom',document_type:'ToDo',
+                c4style_workflow:'Approval',c4style_transition:'row-one',
+                recipients:[{receiver_by_document_field:'owner'},{receiver_by_role:'Approver'}]}};
+            workflowHandlers['Workflow Transition'].c4style_create_notification(workflowForm,'Workflow Transition','row-one');
+        }''')
+        self.assertEqual(self.page.evaluate('workflowCalls[0]'),{'workflow':'Approval','transition':'row-one'})
+        self.assertEqual(self.page.evaluate('route'),['Form','Notification','new-notification-1'])
+        self.assertEqual(self.page.evaluate('newNotification.recipients[1].receiver_by_role'),'Approver')
+        self.page.evaluate('''()=>{
+            workflowResponse={existing:'Existing rule'};
+            workflowHandlers['Workflow Transition'].c4style_create_notification(workflowForm,'Workflow Transition','row-one');
+        }''')
+        self.assertEqual(self.page.evaluate('route'),['Form','Notification','Existing rule'])
+
+    def test_workflow_button_requires_saved_workflow_and_aligns_beside_email(self):
+        self.load_workflow_fixture()
+        self.page.evaluate('''()=>{
+            workflowForm.is_dirty=()=>true;
+            workflowHandlers['Workflow Transition'].c4style_create_notification(workflowForm,'Workflow Transition','row-one');
+            document.body.insertAdjacentHTML('beforeend','<div id="transition-form"><div id="email" class="frappe-control">Send Email To Creator</div><div id="create" class="frappe-control">Create System Notification</div></div>');
+            workflowForm.fields_dict.transitions={grid:{grid_rows_by_docname:{'row-one':{grid_form:{fields_dict:{
+                send_email_to_creator:{$wrapper:[document.querySelector('#email')]},
+                c4style_create_notification:{$wrapper:[document.querySelector('#create')]}
+            }}}}}};
+            workflowHandlers['Workflow Transition'].form_render(workflowForm,'Workflow Transition','row-one');
+            workflowHandlers['Workflow Transition'].form_render(workflowForm,'Workflow Transition','row-one');
+        }''')
+        self.assertEqual(self.page.evaluate('workflowCalls.length'),0)
+        self.assertIn('Save the Workflow first',self.page.evaluate('workflowMessage'))
+        self.assertEqual(self.page.locator('.c4style-transition-actions').count(),1)
+        self.assertEqual(self.page.locator('.c4style-transition-actions').evaluate('el=>getComputedStyle(el).display'),'flex')
+
     def test_no_header_settings_link_and_site_menu_color_applies(self):
         self.assertEqual(self.page.locator('nav button').count(), 0)
         self.assertEqual(self.page.locator('.desk-sidebar').evaluate('(el) => getComputedStyle(el).backgroundColor'), 'rgb(18, 52, 86)')

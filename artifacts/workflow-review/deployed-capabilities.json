@@ -1,0 +1,23 @@
+{
+  "workflow": [
+    "document_type",
+    "transitions",
+    "workflow_state_field"
+  ],
+  "transition": [
+    "allowed",
+    "send_email_to_creator",
+    "condition"
+  ],
+  "channels": "Email\nSlack\nSystem Notification\nSMS",
+  "events": "\nNew\nSave\nSubmit\nCancel\nDays After\nDays Before\nValue Change\nMethod\nCustom",
+  "notification_log_fields": [
+    "type",
+    "document_type",
+    "document_name",
+    "for_user",
+    "from_user",
+    "subject",
+    "email_content"
+  ]
+}

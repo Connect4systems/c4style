@@ -512,6 +512,26 @@ class MenuTests(unittest.TestCase):
         editor.get_by_role('button',name='Delete note',exact=True).click()
         self.assertEqual(editor.get_by_role('textbox').input_value(), 'Keep this')
 
+    def test_list_header_keeps_space_before_first_record_and_sort_remains_clickable(self):
+        self.page.evaluate('''()=>{
+            const list=document.createElement('div');list.className='frappe-list';
+            list.style.cssText='height:220px;overflow:auto';
+            list.innerHTML='<div class="level list-row-head"><button id="sort-column">ID</button></div>'+
+                '<div class="list-row-container"><div class="list-row">First record</div></div>'+
+                '<div style="height:800px"></div>';
+            document.querySelector('main').appendChild(list);
+            document.querySelector('#sort-column').onclick=()=>{window.sorted=true;};
+        }''')
+        for style in ('separated','flat'):
+            self.page.evaluate('value=>document.body.dataset.rowStyle=value',style)
+            self.assertTrue(self.page.evaluate('''()=>{
+                const header=document.querySelector('.list-row-head').getBoundingClientRect();
+                const first=document.querySelector('.list-row-container').getBoundingClientRect();
+                return first.top >= header.bottom + 12;
+            }'''))
+        self.page.locator('#sort-column').click()
+        self.assertTrue(self.page.evaluate('sorted'))
+
     def test_grouping_loaded_rows_preserves_links_selection_and_ungroup_order(self):
         self.page.evaluate('''() => {
             const result=document.createElement('div');result.id='group-result';

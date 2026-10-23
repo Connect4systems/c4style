@@ -684,9 +684,14 @@ body[data-row-style="separated"] .list-row-container:hover {
     background: var(--c4style-row-hover);
 }
 body[data-row-style="separated"] .list-row-container .list-row-border { display: none; }
+.frappe-list .list-row-head {
+    /* Keep the header in flow: a viewport sticky offset can push it over the
+       first record inside Frappe's independently scrolling list container. */
+    position: relative;
+    top: auto;
+    margin-block-end: 12px;
+}
 body[data-row-style="separated"] .frappe-list .list-row-head {
-    position: sticky;
-    top: calc(var(--c4style-header-offset) + var(--c4style-page-head-height));
     z-index: 20;
     border-radius: var(--c4style-radius);
     min-height: 34px;

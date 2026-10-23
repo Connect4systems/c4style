@@ -8,6 +8,11 @@ from c4style.settings import KEY, PALETTES
 
 
 class ColorPalette(Document):
+    def before_validate(self):
+        for field, default in PALETTES['C4Style'].items():
+            if self.get(field) in (None, ''):
+                self.set(field, default)
+
     def validate(self):
         for field in PALETTES['C4Style']:
             if not re.fullmatch(r'#[0-9a-fA-F]{6}', self.get(field) or ''):

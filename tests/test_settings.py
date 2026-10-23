@@ -177,6 +177,10 @@ class SettingsTests(unittest.TestCase):
             self.assertTrue(all(permission[key] for key in ('create','read','write','delete','rename')))
         self.assertEqual({field['fieldname'] for field in schema['fields'] if field['fieldtype']=='Color'},
                          set(settings.PALETTES['C4Style']))
+        for field in schema['fields']:
+            if field['fieldtype'] == 'Color':
+                self.assertNotIn('depends_on', field)
+                self.assertEqual(field['default'], settings.PALETTES['C4Style'][field['fieldname']])
 
     def test_palette_seed_preserves_existing_records_and_custom_site_colors(self):
         service = types.ModuleType('frappe')
@@ -208,6 +212,14 @@ class SettingsTests(unittest.TestCase):
                 Path(__file__).parents[1] / 'c4style/c4style/doctype/color_palette/color_palette.py')
             module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
             record = module.ColorPalette()
+            colors = {'primary':'#123456'}
+            record.get = colors.get
+            record.set = colors.__setitem__
+            record.before_validate()
+            record.validate()
+            self.assertEqual(colors['primary'], '#123456')
+            self.assertEqual(colors['announcement_background'], settings.PALETTES['C4Style']['announcement_background'])
+            self.assertEqual(colors['announcement_color'], settings.PALETTES['C4Style']['announcement_color'])
             record.get = lambda field:settings.PALETTES['Ocean'][field]
             record.validate()
             record.get = lambda field:'red;display:none'

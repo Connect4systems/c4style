@@ -49,117 +49,134 @@
    "fieldname": "primary",
    "fieldtype": "Color",
    "label": "Primary color",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#714B67"
   },
   {
    "fieldname": "accent",
    "fieldtype": "Color",
    "label": "Accent color",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#017E84"
   },
   {
    "fieldname": "background",
    "fieldtype": "Color",
    "label": "Page background",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#E5E8EB"
   },
   {
    "fieldname": "menu_background",
    "fieldtype": "Color",
    "label": "Menu background",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#FFFFFF"
   },
   {
    "fieldname": "menu_text",
    "fieldtype": "Color",
    "label": "Menu text and icons",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#36414C"
   },
   {
    "fieldname": "menu_active",
    "fieldtype": "Color",
    "label": "Selected menu item",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#E5F1F1"
   },
   {
    "fieldname": "navbar_background",
    "fieldtype": "Color",
    "label": "Header background",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#714B67"
   },
   {
    "fieldname": "navbar_text",
    "fieldtype": "Color",
    "label": "Header text and icons",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#FFFFFF"
   },
   {
    "fieldname": "panel_background",
    "fieldtype": "Color",
    "label": "Card and form background",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#FFFFFF"
   },
   {
    "fieldname": "table_header_background",
    "fieldtype": "Color",
    "label": "Table header background",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#714B67"
   },
   {
    "fieldname": "table_header_text",
    "fieldtype": "Color",
    "label": "Table header text",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#FFFFFF"
   },
   {
    "fieldname": "secondary_background",
    "fieldtype": "Color",
    "label": "Secondary action background",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#A58F7A"
   },
   {
    "fieldname": "secondary_text",
    "fieldtype": "Color",
    "label": "Secondary action text",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#FFFFFF"
   },
   {
    "fieldname": "row_hover_background",
    "fieldtype": "Color",
    "label": "Hovered row background",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#E5E8EB"
   },
   {
    "fieldname": "row_border",
    "fieldtype": "Color",
    "label": "List row border",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#CAD3C4"
   },
   {
    "fieldname": "input_background",
    "fieldtype": "Color",
    "label": "Input background",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#FFFFFF"
   },
   {
    "fieldname": "input_border",
    "fieldtype": "Color",
    "label": "Input border color",
-   "reqd": 1
+   "reqd": 1,
+   "default": "#A9B49F"
   },
   {
    "fieldname": "announcement_background",
    "fieldtype": "Color",
    "label": "Announcement background",
    "reqd": 1,
-   "depends_on": "enable_announcement"
+   "default": "#E5E8EB"
   },
   {
    "fieldname": "announcement_color",
    "fieldtype": "Color",
    "label": "Announcement text color",
    "reqd": 1,
-   "depends_on": "enable_announcement"
+   "default": "#714B67"
   }
  ],
  "permissions": [

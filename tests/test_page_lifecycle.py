@@ -62,6 +62,132 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.errors, [])
         self.page.close()
 
+    def load_notification_fixture(self, initial, ready=True):
+        self.page.evaluate('''initial=>{
+            window.notificationSummary=initial;
+            window.notificationHandlers={};window.bellOscillators=0;
+            frappe.realtime={socket:{},on:(name,callback)=>{
+                (notificationHandlers[name] ||= []).push(callback);
+            }};
+            const original=frappe.call;
+            frappe.call=options=>{
+                if(options.method!=='c4style.notifications.get_notifications') return original(options);
+                options.callback({message:structuredClone(notificationSummary)});options.always();
+            };
+            window.AudioContext=class {
+                constructor(){this.state='suspended';this.currentTime=0;this.destination={};}
+                async resume(){this.state='running';}
+                createOscillator(){return {frequency:{},connect(){},start(){bellOscillators++;},stop(){}};}
+                createGain(){return {gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){}};}
+            };
+        }''',initial)
+        if not ready:
+            self.page.evaluate('frappe.realtime.socket=null')
+        self.page.add_script_tag(content=(ROOT/'c4style/public/js/notifications.js').read_text())
+
+    def test_notification_badge_and_link_use_the_signed_in_user(self):
+        self.load_notification_fixture({'unread_count':7,'notifications':[{'name':'old','subject':'Existing'}]})
+        self.assertEqual(self.page.locator('[data-c4style-tools] .c4style-notification-count').inner_text(),'7')
+        self.assertEqual(self.page.locator('.c4style-notification-toast').count(),0)
+        self.page.locator('[data-c4style-tools]').click()
+        link=self.page.locator('[data-c4style-notifications-link]')
+        self.assertIn('normal%40example.com',link.get_attribute('href'))
+        self.assertEqual(link.locator('.c4style-notification-count').inner_text(),'7')
+        link.click()
+        self.assertEqual(self.page.evaluate('route'),['List','Notification Log'])
+        self.assertEqual(self.page.evaluate('frappe.route_options'),{'for_user':'normal@example.com'})
+
+    def test_notification_listener_waits_for_socket_startup_and_installs_only_once(self):
+        self.page.evaluate('''()=>{
+            window.jqueryHandlers={};
+            window.jQuery=()=>({on:(name,callback)=>{jqueryHandlers[name]=callback;}});
+        }''')
+        self.load_notification_fixture({'unread_count':0,'notifications':[]},ready=False)
+        self.assertEqual(self.page.evaluate('notificationHandlers.notification?.length || 0'),0)
+        self.page.evaluate('''()=>{
+            frappe.realtime.socket={};
+            jqueryHandlers['app_ready.c4styleNotifications']();
+            jqueryHandlers['app_ready.c4styleNotifications']();
+        }''')
+        self.assertEqual(self.page.evaluate('notificationHandlers.notification.length'),1)
+
+    def test_new_notification_popups_ring_once_and_clear_badge_after_read(self):
+        self.load_notification_fixture({'unread_count':0,'notifications':[]})
+        self.page.locator('main').click()
+        self.page.evaluate('''()=>{
+            notificationSummary={unread_count:1,notifications:[{name:'new',subject:'<img src=x> New alert'}]};
+            notificationHandlers.notification[0]();
+        }''')
+        popup=self.page.locator('.c4style-notification-toast')
+        self.assertTrue(popup.is_visible())
+        self.assertEqual(popup.locator('img').count(),0)
+        self.assertEqual(self.page.evaluate('bellOscillators'),2)
+        popup.get_by_role('button',name='Dismiss').click()
+        self.page.evaluate('notificationHandlers.notification[0]()')
+        self.assertEqual(self.page.locator('.c4style-notification-toast').count(),0)
+        self.assertEqual(self.page.evaluate('bellOscillators'),2)
+        self.page.evaluate('''()=>{notificationSummary={unread_count:0,notifications:[]};notificationHandlers.indicator_hide[0]();}''')
+        self.assertFalse(self.page.locator('[data-c4style-tools] .c4style-notification-count').is_visible())
+
+    def test_notification_before_first_interaction_offers_sound_unlock(self):
+        self.load_notification_fixture({'unread_count':0,'notifications':[]})
+        self.page.evaluate('''()=>{
+            notificationSummary={unread_count:1,notifications:[{name:'new',subject:'New alert'}]};
+            notificationHandlers.notification[0]();
+        }''')
+        self.assertEqual(self.page.evaluate('bellOscillators'),0)
+        self.page.get_by_role('button',name='Enable bell sound').click()
+        self.assertEqual(self.page.evaluate('bellOscillators'),2)
+        self.page.get_by_role('button',name='View notifications').click()
+        self.assertEqual(self.page.evaluate('route'),['List','Notification Log'])
+
+    def test_older_unread_items_revealed_by_reading_newer_items_do_not_alert(self):
+        self.load_notification_fixture({'unread_count':30,'notifications':[
+            {'name':'recent','subject':'Recent','creation':'2026-10-23 12:00:00'}]})
+        self.page.evaluate('''()=>{
+            notificationSummary={unread_count:10,notifications:[
+                {name:'older',subject:'Older unread item',creation:'2026-10-22 12:00:00'}]};
+            notificationHandlers.notification[0]();
+        }''')
+        self.assertEqual(self.page.locator('.c4style-notification-toast').count(),0)
+
+    def test_disabled_native_notifications_do_not_popup_or_ring(self):
+        self.load_notification_fixture({'unread_count':0,'notifications':[]})
+        self.page.locator('main').click()
+        self.page.evaluate('''()=>{
+            frappe.boot.notification_settings={enabled:0};
+            notificationSummary={unread_count:1,notifications:[{name:'new',subject:'New alert'}]};
+            notificationHandlers.notification[0]();
+        }''')
+        self.assertEqual(self.page.evaluate('bellOscillators'),0)
+        self.assertEqual(self.page.locator('.c4style-notification-toast').count(),0)
+
+    def test_notification_count_refreshes_after_native_mark_all_read(self):
+        self.page.evaluate('''()=>{
+            window.jqueryHandlers={};
+            window.jQuery=()=>({on:(name,callback)=>{jqueryHandlers[name]=callback;}});
+        }''')
+        self.load_notification_fixture({'unread_count':3,'notifications':[{'name':'old','subject':'Existing'}]})
+        self.page.evaluate('''()=>{
+            notificationSummary={unread_count:0,notifications:[]};
+            jqueryHandlers['ajaxComplete.c4styleNotifications']({}, {status:200},
+                {url:'/api/method/frappe.desk.doctype.notification_log.notification_log.mark_all_as_read'});
+        }''')
+        self.assertFalse(self.page.locator('[data-c4style-tools] .c4style-notification-count').is_visible())
+
+    def test_notification_popup_is_visible_above_appearance_dialog_and_can_navigate(self):
+        self.load_notification_fixture({'unread_count':0,'notifications':[]})
+        self.page.locator('[data-c4style-tools]').click()
+        self.page.evaluate('''()=>{
+            notificationSummary={unread_count:1,notifications:[{name:'new',subject:'While tools are open'}]};
+            notificationHandlers.notification[0]();
+        }''')
+        popup=self.page.locator('.c4style-notification-toast')
+        self.assertTrue(popup.evaluate('el=>{const b=el.getBoundingClientRect();return el.contains(document.elementFromPoint(b.x+20,b.y+20));}'))
+        popup.get_by_role('button',name='View notifications').click()
+        self.assertEqual(self.page.get_by_role('dialog').count(),0)
+        self.assertEqual(self.page.evaluate('route'),['List','Notification Log'])
+
     def test_menu_collapses_to_icons_and_preserves_links(self):
         self.page.get_by_role('button', name='Narrow menu', exact=True).click()
         self.assertFalse(self.page.locator('.sidebar-item-label').is_visible())

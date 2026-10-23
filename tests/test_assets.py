@@ -11,7 +11,7 @@ class AssetCacheTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             app=Path(temp)
             (app/'hooks.py').write_bytes((ROOT/'c4style/hooks.py').read_bytes())
-            for relative in ('css/c4style.css','js/c4style.js','js/desk_tools.js'):
+            for relative in ('css/c4style.css','js/c4style.js','js/desk_tools.js','js/notifications.js'):
                 target=app/'public'/relative
                 target.parent.mkdir(parents=True,exist_ok=True)
                 target.write_bytes((ROOT/'c4style/public'/relative).read_bytes())

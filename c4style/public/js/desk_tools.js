@@ -223,6 +223,16 @@
         dialog("Appearance tools", (body, element) => {
             const actions = document.createElement("div"); actions.className = "c4style-tools-actions";
             actions.append(button("Apps and workspaces", openLauncher), button("My sticky notes", openNotes));
+            const notifications = document.createElement("a"); notifications.className = "btn btn-default";
+            notifications.href = "/app/notification-log?for_user=" + encodeURIComponent(frappe.session.user);
+            notifications.textContent = __("My notifications"); notifications.dataset.c4styleNotificationsLink = "true";
+            notifications.addEventListener("click", event => {
+                if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                event.preventDefault(); element.close();
+                if (api.open_notifications) api.open_notifications();
+                else { frappe.route_options = { for_user: frappe.session.user }; frappe.set_route("List", "Notification Log"); }
+            });
+            actions.appendChild(notifications);
             if (api.get_theme().allowUserThemes) actions.append(button("Choose my theme", () => openPalettes(true)));
             if ((frappe.boot.c4style || {}).can_manage) {
                 actions.append(button("Choose site theme", () => openPalettes(false)));

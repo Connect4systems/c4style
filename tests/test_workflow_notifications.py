@@ -28,6 +28,8 @@ class WorkflowNotificationTests(unittest.TestCase):
         self.frappe.db=Attr(has_column=Mock(return_value=True),get_value=Mock(side_effect=lambda doctype,filters,field: 'Rule 1' if self.existing else None),set_value=Mock())
         self.frappe.clear_document_cache=Mock();self.frappe.log_error=Mock()
         self.frappe.enqueue=Mock();self.frappe.msgprint=Mock()
+        self.frappe.get_hooks=Mock(return_value={})
+        self.frappe.get_attr=Mock()
         self.frappe.has_permission=Mock(side_effect=lambda *args,**kwargs:kwargs.get('user')!='denied@example.com')
         self.frappe.get_all=Mock(side_effect=lambda doctype,**kwargs: ['owner@example.com','reader@example.com','reader@example.com','denied@example.com','disabled@example.com'] if doctype=='Has Role' else ['owner@example.com','reader@example.com','denied@example.com'])
         self.frappe.render_template=Mock(side_effect=lambda text,context:'Rendered '+context['doc'].name)
@@ -131,6 +133,78 @@ class WorkflowNotificationTests(unittest.TestCase):
             self.module.capture_transition(self.after)
             self.assertIsNotNone(self.after.flags.c4style_transition_notification)
         finally:self.module._active_transition.reset(token)
+
+    def test_existing_approval_override_receives_original_payload_and_context(self):
+        path='administration.flat_request_workflow.apply_workflow'
+        for paths in ([path,'c4style.workflow_notifications.apply_workflow'],
+                      ['c4style.workflow_notifications.apply_workflow',path]):
+            self.frappe.get_hooks.return_value={'frappe.model.workflow.apply_workflow':paths}
+            payload={'doctype':'ToDo','name':'TODO-1','__approval_note':'Reviewed',
+                     '__approval_attachments':['file-1']}
+            def approved(doc,action):
+                self.assertIs(doc,payload)
+                self.assertEqual(self.module._active_transition.get(),('ToDo','TODO-1','row-one'))
+                return self.after
+            self.frappe.get_attr.return_value=approved
+            self.assertIs(self.module.apply_workflow(payload,'Approve'),self.after)
+            self.assertIsNone(self.module._active_transition.get())
+        self.core.apply_workflow.assert_not_called()
+
+    def test_existing_approval_rejection_is_not_bypassed(self):
+        self.frappe.get_hooks.return_value={'frappe.model.workflow.apply_workflow':
+            ['administration.flat_request_workflow.apply_workflow']}
+        self.frappe.get_attr.return_value=Mock(side_effect=PermissionError('Approval denied'))
+        with self.assertRaises(PermissionError):
+            self.module.apply_workflow({'doctype':'ToDo','name':'TODO-1'},'Approve')
+        self.core.apply_workflow.assert_not_called()
+        self.assertIsNone(self.module._active_transition.get())
+        self.assertEqual(self.logs,[])
+
+    def test_administration_approval_history_integration(self):
+        source=Path(__file__).parents[2]/'administration/administration/flat_request_workflow.py'
+        if not source.exists():
+            self.skipTest('Sibling Administration checkout is required for this integration test')
+        self.frappe._=lambda text:text
+        self.frappe.flags=Attr()
+        utils=types.ModuleType('frappe.utils');utils.now_datetime=lambda:'2026-10-23 12:00:00'
+        previous=sys.modules.get('frappe.utils');sys.modules['frappe.utils']=utils
+        try:
+            spec=importlib.util.spec_from_file_location('administration_approval_under_test',source)
+            administration=importlib.util.module_from_spec(spec);spec.loader.exec_module(administration)
+        finally:
+            if previous is None:sys.modules.pop('frappe.utils',None)
+            else:sys.modules['frappe.utils']=previous
+        self.before.update(doctype='Add Flat to Contract',modified='version-1',document_approval=[])
+        self.after.update(doctype=self.before.doctype,document_approval=[])
+        self.workflow.document_type=self.before.doctype
+        self.rule.document_type=self.before.doctype
+        self.before.as_dict=lambda:dict(self.before)
+        self.after.append=lambda field,row:self.after[field].append(row)
+        # Real Administration wrapper requests a row lock.
+        self.frappe.get_doc.side_effect=lambda doctype,name=None,**kwargs:self.get_doc(doctype,name)
+        self.frappe.get_hooks.return_value={'frappe.model.workflow.apply_workflow':[
+            'administration.flat_request_workflow.apply_workflow',
+            'c4style.workflow_notifications.apply_workflow']}
+        self.frappe.get_attr.return_value=administration.apply_workflow
+        def native(doc,action):
+            self.module.capture_transition(self.after)
+            administration.validate_approval_history(self.after)
+            self.module.deliver_transition(self.after)
+            return self.after
+        self.core.apply_workflow.side_effect=native
+        payload=dict(self.before,__approval_note='  Reviewed  ')
+        self.module.apply_workflow(payload,'Approve')
+        self.assertEqual(len(self.after.document_approval),1)
+        self.assertEqual(self.after.document_approval[0]['note'],'Reviewed')
+        self.assertEqual(self.after.document_approval[0]['approved_by_role'],'Approver')
+        self.assertEqual(len(self.logs),2)
+        self.assertIsNone(self.frappe.flags.flat_request_approval)
+        # Removing the trusted context must still reject a direct status edit.
+        self.after.document_approval=[]
+        with self.assertRaisesRegex(ValueError,'Use a workflow action'):
+            administration.validate_approval_history(self.after)
+        with self.assertRaisesRegex(ValueError,'Reload'):
+            self.module.apply_workflow(dict(payload,modified='stale'),'Approve')
 
     def test_bulk_worker_keeps_exact_action_for_ambiguous_destinations(self):
         other=Attr(self.row);other.name='different';other.action='Different action'

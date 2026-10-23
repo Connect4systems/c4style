@@ -126,7 +126,7 @@ def sync_workflow_notifications(doc, method=None):
 
 @frappe.whitelist()
 def apply_workflow(doc, action):
-    """Delegate the actual action to core, carrying its exact selected row to hooks."""
+    """Carry notification context without bypassing another app's approval handler."""
     from frappe.model.workflow import apply_workflow as native_apply, get_transitions, get_workflow
 
     source = frappe.parse_json(doc) if isinstance(doc, str) else doc
@@ -141,9 +141,23 @@ def apply_workflow(doc, action):
     context = (before.doctype, before.name, selected.name) if selected else None
     token = _active_transition.set(context)
     try:
-        return native_apply(doc, action)
+        handler = _workflow_handler(native_apply)
+        return handler(doc, action)
     finally:
         _active_transition.reset(token)
+
+
+def _workflow_handler(native_apply):
+    # Frappe's RPC dispatcher uses only the last override. When ours wins,
+    # preserve the other app's handler (Administration supplies the trusted
+    # approval-history context, attachment checks and stale-document checks).
+    overrides = frappe.get_hooks('override_whitelisted_methods', {}).get(
+        'frappe.model.workflow.apply_workflow', [])
+    if isinstance(overrides, str):
+        overrides = [overrides]
+    others = [path for path in overrides
+              if path != 'c4style.workflow_notifications.apply_workflow']
+    return frappe.get_attr(others[-1]) if others else native_apply
 
 
 @frappe.whitelist(methods=['POST'])

@@ -25,7 +25,7 @@ Users need write access to the Workflow and create access to Notification to cre
 
 ## Execution
 
-The normal workflow API delegates the actual action and permission decisions to Frappe. It carries the selected row's identity into document hooks. Before a state change, the hooks use the native workflow evaluator on the saved pre-transition document, preserving expressions using `frappe.session.user`. A false condition, missing role, self-approval restriction, inactive Workflow or disabled rule prevents delivery.
+The normal workflow API delegates to the last installed non-C4Style workflow override, falling back to Frappe when none exists. This preserves Administration's trusted approval context, server-owned history, attachment checks and stale-document protection. It carries the selected row's identity into document hooks. Before a state change, the hooks use the native workflow evaluator on the saved pre-transition document, preserving expressions using `frappe.session.user`. A false condition, missing role, self-approval restriction, inactive Workflow or disabled rule prevents delivery.
 
 After a successful save/submit/cancel/update-after-submit, logs are created for the document owner and enabled users with the selected Allowed role. Document-level read access is checked for every recipient; duplicate recipients are removed. The actor is included when eligible. Subjects/messages support `doc` and `transition` template variables (`state`, `action`, `next_state`, `allowed`). Logs reference the document, and the existing badge/popup/bell integration receives their native realtime events after commit.
 
@@ -66,3 +66,16 @@ bench restart
 ```
 
 Regression checks cover another app saving a Workflow before the field exists, partially installed columns, activation after installation in the same process, and normal Notification saves while the extension schema is absent.
+
+## Administration approval compatibility
+
+Previously C4Style's RPC override called core directly, bypassing
+`administration.flat_request_workflow.apply_workflow`. Administration consequently
+rejected legitimate approvals with “Use a workflow action to change the request status.”
+The delegation fix requires only updated C4Style Python files, cache clearing and
+process restart; no new schema migration is needed. Administration requires no code
+changes. When its sibling checkout is available, the standalone suite loads its real
+handler and history validator to check approval/history/notification integration,
+direct status edit rejection and stale-document rejection with mocked Frappe services.
+Verify the deployed result using a dedicated test request rather than a production
+contract approval.

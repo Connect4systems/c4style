@@ -8,6 +8,7 @@
   "theme_tab",
   "colors_section",
   "palette",
+  "allow_user_themes",
   "primary",
   "accent",
   "background",
@@ -73,6 +74,13 @@
    "label": "Color palette",
    "options": "C4Style\nOcean\nForest\nSunset\nLime Fresh\nWine\nCrimson Red\nOcean Teal\nBurnt Orange\nIndigo Night\nDark Green\nRoyal Purple\nJet Black\nSky Blue\nCharcoal Grey\nCoffee Brown\nRose Pink\nCustom",
    "default": "C4Style"
+  },
+  {
+   "fieldname": "allow_user_themes",
+   "fieldtype": "Check",
+   "label": "Users can choose their theme",
+   "default": "0",
+   "description": "Adds Choose my theme to Appearance tools. Each user can save a personal color palette. Turn off to enforce the shared site theme."
   },
   {
    "fieldname": "primary",

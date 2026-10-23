@@ -21,7 +21,8 @@ DEFAULTS = dict(primary='#714B67', accent='#017E84', background='#E5E8EB',
                 inputBackground='#FFFFFF', inputBorder='#A9B49F',
                 menuDefaultCollapsed=True, showScrollButtons=True, nativeDrawers=True,
                 enableAnnouncement=False, announcementText='', announcementSpeed=24,
-                announcementBackground='#F0EDF7', announcementColor='#36414C', notes=[])
+                announcementBackground='#F0EDF7', announcementColor='#36414C', notes=[],
+                allowUserThemes=False, themePalette='')
 
 
 def validate(settings):
@@ -46,6 +47,8 @@ def validate(settings):
             valid = value in ('auto', 'ltr', 'rtl')
         elif key == 'fontFamily':
             valid = value in ('system', 'arial', 'tahoma', 'georgia')
+        elif key == 'themePalette':
+            valid = isinstance(value, str) and (value == '' or value in PALETTES)
         elif key == 'brandName':
             valid = isinstance(value, str) and 1 <= len(value.strip()) <= 80
         elif key in ('headerStyle', 'rowStyle', 'inputBorderStyle', 'fieldStyle', 'buttonStyle', 'shadowStyle', 'menuBehavior'):
@@ -69,7 +72,7 @@ def validate(settings):
             if valid:
                 valid = len({note['id'] for note in value}) == len(value) and len(json.dumps(value).encode('utf-8')) <= 48000
         elif key in ('workspaceWide', 'menuCollapsed', 'menuDefaultCollapsed',
-                     'showScrollButtons', 'nativeDrawers', 'enableAnnouncement'):
+                     'showScrollButtons', 'nativeDrawers', 'enableAnnouncement', 'allowUserThemes'):
             valid = type(value) is bool
         if not valid:
             frappe.throw('Invalid style setting: ' + key)
@@ -88,7 +91,7 @@ def read_settings(user):
         return {}
 
 
-SITE_FIELDS = dict(primary='primary', accent='accent', background='background',
+SITE_FIELDS = dict(allowUserThemes='allow_user_themes', primary='primary', accent='accent', background='background',
                    fontSize='font_size', radius='radius', density='density',
                    menuBackground='menu_background', menuText='menu_text', menuActive='menu_active',
                    navbarBackground='navbar_background', navbarText='navbar_text',
@@ -104,14 +107,14 @@ SITE_FIELDS = dict(primary='primary', accent='accent', background='background',
                    nativeDrawers='native_drawers', enableAnnouncement='enable_announcement',
                    announcementText='announcement_text', announcementSpeed='announcement_speed',
                    announcementBackground='announcement_background', announcementColor='announcement_color')
-PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed', 'notes'}
+PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed', 'notes', 'themePalette'}
 
 
 def document_settings(doc):
     palette = PALETTES.get(doc.get('palette'), {})
     values = {key: doc.get(field) if doc.get(field) not in (None, '') else palette.get(field, DEFAULTS[key])
               for key, field in SITE_FIELDS.items()}
-    for key in ('menuDefaultCollapsed', 'showScrollButtons', 'nativeDrawers', 'enableAnnouncement'):
+    for key in ('menuDefaultCollapsed', 'showScrollButtons', 'nativeDrawers', 'enableAnnouncement', 'allowUserThemes'):
         if values[key] in (0, 1):
             values[key] = bool(values[key])
     return values
@@ -161,7 +164,9 @@ def save_settings(settings, scope='personal', palette=None):
         doc.save()
         return document_settings(doc)
     if set(values) - PERSONAL_FIELDS:
-        frappe.throw('Personal preferences may only change menu width, workspace width, text direction and personal notes', frappe.PermissionError)
+        frappe.throw('Personal preferences may only change layout, notes and an allowed theme preference', frappe.PermissionError)
+    if values.get('themePalette') and not get_site_settings()['allowUserThemes']:
+        frappe.throw('Personal theme selection is disabled by the site manager', frappe.PermissionError)
     # Merge partial menu updates without discarding other account preferences.
     current = {k: v for k, v in read_settings(frappe.session.user).items() if k in PERSONAL_FIELDS}
     current.update(values)

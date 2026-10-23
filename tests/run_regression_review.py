@@ -35,7 +35,7 @@ def main():
         # Native DocType scripts use a server endpoint rather than the public asset URL.
         page.evaluate('frappe.ui.form.handlers["Style Settings"] = {}')
         page.add_script_tag(content='(()=>{'+(ROOT/'c4style/c4style/doctype/style_settings/style_settings.js').read_text()+'})();')
-        snapshot=page.evaluate('({settings:frappe.c4style.get_theme(),palette:cur_frm.doc.palette})')
+        snapshot=page.evaluate('({settings:(frappe.c4style.get_site_theme || frappe.c4style.get_theme)(),palette:cur_frm.doc.palette})')
         def case(name,fn):
             try:
                 detail=fn(); checks.append({'name':name,'passed':True,'detail':detail}); print('PASS '+name,flush=True)

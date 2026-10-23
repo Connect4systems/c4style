@@ -60,20 +60,35 @@
             body.append(search, grid, empty);
         });
     }
-    function openPalettes() {
-        if (!(frappe.boot.c4style || {}).can_manage) return;
-        dialog("Choose site theme", body => {
+    function openPalettes(personalChoice = false) {
+        if (personalChoice ? !api.get_theme().allowUserThemes : !(frappe.boot.c4style || {}).can_manage) return;
+        dialog(personalChoice ? "Choose my theme" : "Choose site theme", (body, element) => {
             const explanation = document.createElement("p");
-            explanation.textContent = __("These palettes update the shared site theme. Confirm before applying a palette to all users.");
+            explanation.textContent = __(personalChoice ? "Choose a color palette for your account. Your preference is saved across refreshes." : "These palettes update the shared site theme. Confirm before applying a palette to all users.");
             const grid = document.createElement("div"); grid.className = "c4style-palette-grid";
+            if (personalChoice) {
+                const reset = button("Use site theme", () => api.save_personal("themePalette", "", () => element.close()));
+                reset.dataset.c4stylePersonalAction = "true";
+                body.appendChild(reset);
+            }
             Object.entries(api.palettes).forEach(([name, palette]) => {
-                const choice = button(name, () => frappe.confirm(__("Apply {0} to the site for all users?", [name]), () => {
+                const choice = button(name, () => {
+                    if (personalChoice) {
+                        if (api.get_theme().allowUserThemes) api.save_personal("themePalette", name, () => element.close());
+                        return;
+                    }
+                    frappe.confirm(__("Apply {0} to the site for all users?", [name]), () => {
                     choice.disabled = true;
                     frappe.call({ method: "c4style.settings.save_settings", args: { settings: JSON.stringify(api.palette_settings(name)), scope: "site", palette: name },
                         callback: response => { api.apply_theme(response.message); frappe.show_alert({ message: __("Site style saved"), indicator: "green" }); },
                         always: () => { choice.disabled = false; },
                     });
-                }), "c4style-palette-choice btn btn-default");
+                    });
+                }, "c4style-palette-choice btn btn-default");
+                if (personalChoice) {
+                    choice.dataset.c4stylePersonalAction = "true";
+                    choice.setAttribute("aria-pressed", String(api.get_personal().themePalette === name));
+                }
                 const colors = document.createElement("span"); colors.className = "c4style-palette-dots"; colors.setAttribute("aria-hidden", "true");
                 [palette.primary, palette.accent, palette.background, palette.secondary_background, palette.menu_background].forEach(color => {
                     const dot = document.createElement("i"); dot.style.backgroundColor = color; colors.appendChild(dot);
@@ -208,8 +223,9 @@
         dialog("Appearance tools", (body, element) => {
             const actions = document.createElement("div"); actions.className = "c4style-tools-actions";
             actions.append(button("Apps and workspaces", openLauncher), button("My sticky notes", openNotes));
+            if (api.get_theme().allowUserThemes) actions.append(button("Choose my theme", () => openPalettes(true)));
             if ((frappe.boot.c4style || {}).can_manage) {
-                actions.append(button("Choose site theme", openPalettes));
+                actions.append(button("Choose site theme", () => openPalettes(false)));
                 actions.append(button("Style Settings", () => { element.close(); frappe.set_route("Form", "Style Settings"); }));
             }
             body.appendChild(actions);

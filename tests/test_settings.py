@@ -88,6 +88,27 @@ class SettingsTests(unittest.TestCase):
                 settings.save_settings({key: '#ffffff'})
         fake.defaults.set_default.assert_not_called()
 
+    def test_personal_theme_selection_requires_the_site_switch(self):
+        with self.assertRaises(PermissionError):
+            settings.save_settings({'themePalette':'Ocean'})
+        fake.defaults.set_default.assert_not_called()
+        self.doc.get.side_effect = lambda field: {'primary':'#112233','allow_user_themes':1}.get(field)
+        settings.save_settings({'themePalette':'Ocean'})
+        self.assertEqual(json.loads(fake.defaults.set_default.call_args.args[1]), {'themePalette':'Ocean'})
+        self.assertEqual(fake.defaults.set_default.call_args.kwargs['parent'],fake.session.user)
+        self.doc.save.assert_not_called()
+
+    def test_users_cannot_enable_personal_themes_or_save_an_unknown_palette(self):
+        with self.assertRaises(PermissionError):
+            settings.save_settings({'allowUserThemes':True})
+        for palette in ('Custom', 'Unknown', {}, True):
+            with self.subTest(palette=palette), self.assertRaises(ValidationError):
+                settings.save_settings({'themePalette':palette})
+
+    def test_users_can_reset_to_the_site_theme_while_selection_is_disabled(self):
+        settings.save_settings({'themePalette':''})
+        self.assertEqual(json.loads(fake.defaults.set_default.call_args.args[1]), {'themePalette':''})
+
     def test_menu_updates_preserve_other_preferences(self):
         fake.defaults.get_defaults_for.return_value = {
             'c4style_settings': json.dumps({'direction': 'rtl', 'primary': '#ffffff'})}

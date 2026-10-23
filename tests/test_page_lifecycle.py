@@ -33,7 +33,7 @@ class MenuTests(unittest.TestCase):
         self.page.goto('https://c4style.test/app/home')
         self.load_fixture_assets()
 
-    def load_fixture_assets(self):
+    def load_fixture_assets(self, site=None):
         self.page.add_style_tag(content=(ROOT / 'c4style/public/css/c4style.css').read_text(encoding='utf-8'))
         self.page.add_script_tag(content='''
             window.__ = text => text;
@@ -54,6 +54,7 @@ class MenuTests(unittest.TestCase):
             };
         ''')
         self.page.evaluate("frappe.boot.c4style.personal=JSON.parse(sessionStorage.getItem('test-personal') || '{}')")
+        self.page.evaluate('values=>Object.assign(frappe.boot.c4style.site,values)', site or {})
         self.page.add_script_tag(content=(ROOT / 'c4style/public/js/c4style.js').read_text(encoding='utf-8'))
         self.page.add_script_tag(content=(ROOT / 'c4style/public/js/desk_tools.js').read_text(encoding='utf-8'))
 
@@ -246,6 +247,39 @@ class MenuTests(unittest.TestCase):
         self.page.evaluate('pendingConfirmation()')
         self.assertEqual(self.page.evaluate('calls[0].scope'),'site')
         self.assertEqual(self.page.evaluate('calls[0].palette'),'Lime Fresh')
+
+    def test_personal_theme_choice_restores_after_refresh_and_obeys_site_switch(self):
+        self.page.evaluate('frappe.c4style.apply_theme({allowUserThemes:true,primary:"#112233"})')
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='Choose my theme',exact=True).click()
+        self.page.get_by_role('button',name='Ocean',exact=True).click()
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#155E75')
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_site_theme().primary'), '#112233')
+        self.assertEqual(self.page.evaluate('JSON.parse(calls[0].settings)'), {'themePalette':'Ocean'})
+        self.assertIsNone(self.page.evaluate('calls[0].scope'))
+        self.page.reload()
+        self.load_fixture_assets({'allowUserThemes':True,'primary':'#112233'})
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#155E75')
+        self.page.evaluate('frappe.c4style.apply_theme({allowUserThemes:false})')
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#112233')
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.assertEqual(self.page.get_by_role('button',name='Choose my theme',exact=True).count(),0)
+        self.page.keyboard.press('Escape')
+        self.page.evaluate('frappe.c4style.apply_theme({allowUserThemes:true})')
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#155E75')
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='Choose my theme',exact=True).click()
+        self.page.get_by_role('button',name='Use site theme',exact=True).click()
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#112233')
+
+    def test_failed_personal_theme_save_restores_site_colors(self):
+        self.page.evaluate('frappe.c4style.apply_theme({allowUserThemes:true,primary:"#112233"})')
+        self.page.evaluate('()=>{frappe.call=options=>{options.error();options.always();};}')
+        self.page.get_by_role('button',name='Appearance tools',exact=True).click()
+        self.page.get_by_role('button',name='Choose my theme',exact=True).click()
+        self.page.get_by_role('button',name='Ocean',exact=True).click()
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#112233')
+        self.assertTrue(self.page.get_by_role('button',name='Ocean',exact=True).is_enabled())
 
     def test_app_launcher_filters_allowed_workspaces(self):
         self.enable_app_menu()

@@ -360,13 +360,17 @@
     }
 };
     let boot = (frappe.boot && frappe.boot.c4style) || {};
-    let theme = boot.site || {};
+    let siteTheme = boot.site || {};
+    let theme = siteTheme;
     let personal = { menuCollapsed: theme.menuDefaultCollapsed !== false, workspaceWide: false, direction: "auto", notes: [], ...(boot.personal || {}) };
     const originalDirection = document.documentElement.getAttribute("dir") || "ltr";
     const color = value => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
 
     function applyTheme(values) {
-        theme = { ...theme, ...values };
+        siteTheme = { ...siteTheme, ...values };
+        const palette = siteTheme.allowUserThemes && palettes[personal.themePalette];
+        const overrides = palette ? Object.fromEntries(Object.entries(paletteFields).map(([key, field]) => [key, palette[field]])) : {};
+        theme = { ...siteTheme, ...overrides };
         const root = document.documentElement;
         const variables = {
             primary: ["--primary", "--btn-primary"],
@@ -425,7 +429,8 @@
         savingPersonal = true;
         const previous = personal[key];
         personal[key] = value;
-        applyPersonal();
+        if (key === "themePalette") applyTheme({});
+        else applyPersonal();
         refreshMenus();
         document.querySelectorAll("[data-c4style-menu-controls] button, [data-c4style-personal-action]").forEach(item => { item.disabled = true; });
         frappe.call({
@@ -436,7 +441,10 @@
                 frappe.show_alert({ message: key === "notes" ? __("Notes saved") : __("Layout preference saved"), indicator: "green" });
             },
             error: () => {
-                personal[key] = previous; applyPersonal(); refreshMenus();
+                personal[key] = previous;
+                if (key === "themePalette") applyTheme({});
+                else applyPersonal();
+                refreshMenus();
                 if (frappe.c4style.sync_tools) frappe.c4style.sync_tools();
             },
             always: () => { savingPersonal = false; document.querySelectorAll("[data-c4style-menu-controls] button, [data-c4style-personal-action]").forEach(item => { item.disabled = false; }); },
@@ -627,7 +635,8 @@
     frappe.c4style = {
         apply_theme: applyTheme, palettes,
         palette_settings: name => Object.fromEntries(Object.entries(paletteFields).map(([key, field]) => [key, palettes[name][field]])),
-        get_theme: () => ({ ...theme }), get_personal: () => ({ ...personal }), save_personal: savePersonal,
+        get_theme: () => ({ ...theme }), get_site_theme: () => ({ ...siteTheme }),
+        get_personal: () => ({ ...personal }), save_personal: savePersonal,
     };
     // Keep bookmarks working while the native Single DocType enforces permissions.
     frappe.standard_pages = frappe.standard_pages || {};
@@ -642,11 +651,11 @@
         const current = frappe.boot && frappe.boot.c4style;
         if (current && current !== boot) {
             boot = current;
-            theme = { ...current.site };
-            personal = { menuCollapsed: theme.menuDefaultCollapsed !== false, workspaceWide: false,
+            siteTheme = { ...current.site };
+            personal = { menuCollapsed: siteTheme.menuDefaultCollapsed !== false, workspaceWide: false,
                 direction: "auto", notes: [], ...(current.personal || {}) };
         }
-        applyTheme(theme);
+        applyTheme(siteTheme);
     }
     function start() {
         document.querySelectorAll("[data-c4style-settings-link]").forEach(link => link.remove());

@@ -2,11 +2,12 @@
 
 Removed `persistent_menu` from the form and server mapping. Its disabled state routed users into a centered native workspace sidebar, bypassing the edge menu on list/form pages. Permitted workspaces now use one edge menu consistently; existing stored values of this removed field cannot disable it.
 
-The remaining 39 data controls have active consumers. They are retained rather than deleting settings that do affect the app. Announcement details are hidden when the announcement is disabled. New-user menu width and personal-direction precedence are documented in the form.
+The remaining 40 data controls have active consumers. They are retained rather than deleting settings that do affect the app. Announcement details are hidden when the announcement is disabled. New-user menu width and personal-direction precedence are documented in the form.
 
 | Field | Applied effect |
 | --- | --- |
 | `palette` | Loads all preset colors; Custom preserves manual colors. |
+| `allow_user_themes` | Enables an account-specific palette chooser in Appearance tools. Off by default; disabled preferences are ignored and the server rejects new personal selections. |
 | `primary` | Primary action buttons, selected accents and palette preview. |
 | `accent` | Secondary accent, focus outlines and native selection colors. |
 | `background` | Desk page background. |

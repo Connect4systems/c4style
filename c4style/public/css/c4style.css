@@ -558,6 +558,8 @@ body, .form-control, .btn { font-family: var(--c4style-font-family); }
 }
 /* DataTable paints the title content separately from its containing cell. */
 .datatable .dt-row-header .dt-cell,
+.datatable .dt-header .dt-cell,
+.datatable .dt-header .dt-cell__content,
 .datatable .dt-cell--header,
 .datatable .dt-row-header .dt-cell__content,
 .datatable .dt-cell--header .dt-cell__content {
@@ -789,7 +791,7 @@ body[data-button-style] .c4style-palette-choice { display: grid; gap: 12px; padd
 .c4style-app-tile[hidden] { display: none; }
 .c4style-announcement { position: sticky; top: 0; display: flex; gap: 12px; min-height: 30px; align-items: center; background: var(--c4style-announcement-bg); color: var(--c4style-announcement-text); z-index: 1025; padding-inline: 20px 8px; }
 .c4style-announcement-viewport { flex: 1; min-width: 0; overflow: hidden; }
-.c4style-announcement-message { display: block; width: max-content; white-space: nowrap; }
+.c4style-announcement-message { display: block; width: max-content; min-width: 0; max-width: none; white-space: nowrap; font-size: var(--c4style-announcement-font-size, 14px) !important; }
 .c4style-announcement-overflow .c4style-announcement-message { animation: c4style-announcement-scroll var(--c4style-announcement-duration, 24s) linear infinite alternate; }
 .c4style-announcement:hover .c4style-announcement-message, .c4style-announcement:focus-within .c4style-announcement-message { animation-play-state: paused; }
 .c4style-announcement-close { border: 0; background: transparent; color: inherit; font-size: 20px; line-height: 1; min-width: 28px; min-height: 28px; }

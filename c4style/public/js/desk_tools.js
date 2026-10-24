@@ -266,12 +266,12 @@
         if (message.textContent !== text) message.textContent = text;
         const duration = theme.announcementSpeed;
         strip.style.setProperty("--c4style-announcement-duration", `${duration >= 5 && duration <= 120 ? duration : 24}s`);
-        const fontSize = theme.announcementFontSize;
-        strip.style.fontSize = `${Number.isFinite(fontSize) && fontSize >= 10 && fontSize <= 48 ? fontSize : 14}px`;
+        const fontSize = Number(theme.announcementFontSize);
+        strip.style.setProperty("--c4style-announcement-font-size", `${Number.isFinite(fontSize) && fontSize >= 10 && fontSize <= 48 ? fontSize : 14}px`);
         const viewport = strip.querySelector(".c4style-announcement-viewport");
-        const overflow = Math.max(0, message.scrollWidth - viewport.clientWidth);
+        const travel = viewport.clientWidth - message.scrollWidth;
         strip.classList.add("c4style-announcement-overflow");
-        strip.style.setProperty("--c4style-announcement-travel", `${(document.documentElement.dir === "rtl" ? 1 : -1) * (overflow > 0 ? overflow : -(viewport.clientWidth - message.scrollWidth))}px`);
+        strip.style.setProperty("--c4style-announcement-travel", `${(document.documentElement.dir === "rtl" ? -1 : 1) * travel}px`);
         document.documentElement.style.setProperty("--c4style-announcement-height", `${strip.offsetHeight}px`);
     }
     function syncBreadcrumbs() {

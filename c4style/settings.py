@@ -42,7 +42,7 @@ DEFAULTS = dict(primary='#714B67', accent='#017E84', background='#E5E8EB',
                 rowHoverBackground='#F1F6ED', rowBorder='#CAD3C4',
                 inputBackground='#FFFFFF', inputBorder='#A9B49F',
                 menuDefaultCollapsed=True, showScrollButtons=True, nativeDrawers=True,
-                enableAnnouncement=False, announcementText='', announcementSpeed=24,
+                enableAnnouncement=False, announcementText='', announcementSpeed=24, announcementFontSize=14,
                 announcementBackground='#F0EDF7', announcementColor='#36414C', notes=[],
                 allowUserThemes=False, themePalette='')
 
@@ -60,8 +60,8 @@ def validate(settings):
                    'rowHoverBackground', 'rowBorder', 'inputBackground', 'inputBorder',
                    'announcementBackground', 'announcementColor'):
             valid = isinstance(value, str) and re.fullmatch(r'#[0-9a-fA-F]{6}', value)
-        elif key in ('fontSize', 'radius', 'announcementSpeed'):
-            low, high = {'fontSize': (12, 18), 'radius': (2, 16), 'announcementSpeed': (5, 120)}[key]
+        elif key in ('fontSize', 'radius', 'announcementSpeed', 'announcementFontSize'):
+            low, high = {'fontSize': (12, 18), 'radius': (2, 16), 'announcementSpeed': (5, 120), 'announcementFontSize': (10, 48)}[key]
             valid = type(value) in (int, float) and math.isfinite(value) and low <= value <= high
         elif key == 'density':
             valid = value in ('compact', 'comfortable')
@@ -130,7 +130,7 @@ SITE_FIELDS = dict(allowUserThemes='allow_user_themes', primary='primary', accen
                    rowBorder='row_border', inputBackground='input_background', inputBorder='input_border',
                    menuDefaultCollapsed='menu_default_collapsed', showScrollButtons='show_scroll_buttons',
                    nativeDrawers='native_drawers', enableAnnouncement='enable_announcement',
-                   announcementText='announcement_text', announcementSpeed='announcement_speed',
+                   announcementFontSize='announcement_font_size', announcementText='announcement_text', announcementSpeed='announcement_speed',
                    announcementBackground='announcement_background', announcementColor='announcement_color')
 PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed', 'notes', 'themePalette'}
 
@@ -150,6 +150,11 @@ def get_site_settings():
 
 
 def boot_session(bootinfo):
+    # Keep the legacy route for bookmarks, but expose only the native settings
+    # form in Desk's page search.
+    page_info = bootinfo.get('page_info') if isinstance(bootinfo, dict) else getattr(bootinfo, 'page_info', None)
+    if isinstance(page_info, dict):
+        page_info.pop('c4style-settings', None)
     personal = read_settings(frappe.session.user)
     bootinfo.c4style = dict(site=get_site_settings(),
                            personal={k: v for k, v in personal.items() if k in PERSONAL_FIELDS},

@@ -57,6 +57,15 @@ class SettingsTests(unittest.TestCase):
             with self.subTest(values=values), self.assertRaises(ValidationError):
                 settings.validate(values)
 
+    def test_boot_hides_legacy_settings_search_without_removing_other_pages(self):
+        boot = types.SimpleNamespace(page_info={
+            'c4style-settings': {'title': 'C4Style Settings'},
+            'other-page': {'title': 'Other Page'},
+        })
+        settings.boot_session(boot)
+        self.assertEqual(boot.page_info, {'other-page': {'title': 'Other Page'}})
+        self.assertIn('site', boot.c4style)
+
     def test_non_admin_cannot_publish(self):
         with self.assertRaises(PermissionError):
             settings.save_settings({}, 'site')

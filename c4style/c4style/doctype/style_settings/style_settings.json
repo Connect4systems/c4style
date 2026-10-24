@@ -51,6 +51,7 @@
   "announcement_tab",
   "enable_announcement",
   "announcement_text",
+  "announcement_font_size",
   "announcement_speed",
   "announcement_background",
   "announcement_color",
@@ -369,6 +370,15 @@
    "description": "Plain text only. Users can dismiss this message for the current page session.",
    "default": "",
    "depends_on": "enable_announcement"
+  },
+  {
+   "fieldname": "announcement_font_size",
+   "fieldtype": "Int",
+   "label": "Announcement font size (px)",
+   "default": "14",
+   "reqd": 1,
+   "depends_on": "enable_announcement",
+   "description": "10 to 48 pixels."
   },
   {
    "fieldname": "announcement_speed",

@@ -361,10 +361,13 @@ class MenuTests(unittest.TestCase):
         self.page.evaluate('frappe.c4style.sync_tools()')
         self.assertEqual(self.page.locator('.c4style-announcement').count(),0)
 
-    def test_short_announcement_stays_visible_throughout_the_duration(self):
-        self.page.evaluate('frappe.c4style.apply_theme({enableAnnouncement:true,announcementText:"Visible now",announcementSpeed:25})')
+    def test_short_announcement_moves_and_uses_its_font_size(self):
+        self.page.evaluate('frappe.c4style.apply_theme({enableAnnouncement:true,announcementText:"Visible now",announcementSpeed:25,announcementFontSize:26})')
         message = self.page.locator('.c4style-announcement-message')
-        self.assertEqual(message.evaluate('(el)=>getComputedStyle(el).animationName'), 'none')
+        self.assertEqual(message.evaluate('(el)=>getComputedStyle(el).animationName'), 'c4style-announcement-scroll')
+        self.assertEqual(message.evaluate('(el)=>getComputedStyle(el).fontSize'), '26px')
+        positions = [message.evaluate('(el,t)=>{const a=el.getAnimations()[0];a.pause();a.currentTime=t;return el.getBoundingClientRect().left}', t) for t in (0,12500)]
+        self.assertGreater(abs(positions[1]-positions[0]), 20)
         self.assertTrue(message.evaluate('el=>{const a=el.getBoundingClientRect(),b=el.parentElement.getBoundingClientRect();return a.left>=b.left && a.top>=b.top;}'))
 
     def test_long_announcement_moves_without_leaving_an_empty_viewport(self):

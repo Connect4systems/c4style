@@ -41,7 +41,7 @@ bench --site your-site clear-cache
 bench restart
 ```
 
-Desk asset URLs now include a content fingerprint so changed CSS/JavaScript files get new browser cache keys after deployment. Clear the site cache and restart workers after deploying hook changes.
+Desk asset URLs now include a content fingerprint so changed CSS/JavaScript files get new browser cache keys after deployment. Clear the site cache and restart workers after deploying hook changes. Saving Style Settings broadcasts an update after commit. Open sessions fetch the saved settings immediately through realtime events, when returning to the tab, and every 30 seconds as a fallback. Users with an allowed personal palette keep their chosen colors.
 
 Hard-refresh the browser. Migration installs the Single DocType and the C4Style workspace shortcut. Existing `/app/c4style-settings` bookmarks redirect to the native form.
 

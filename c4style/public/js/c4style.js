@@ -312,11 +312,41 @@
         }
         applyTheme(siteTheme);
     }
+    let refreshingSettings = false;
+    let settingsListenerInstalled = false;
+    function refreshSiteSettings() {
+        if (refreshingSettings || !frappe.boot?.c4style || !frappe.call) return;
+        refreshingSettings = true;
+        frappe.call({
+            method: "c4style.settings.get_settings",
+            callback: response => {
+                if (response.message) applyTheme(response.message);
+            },
+            always: () => { refreshingSettings = false; },
+        });
+    }
+    function installSettingsListener() {
+        if (!settingsListenerInstalled && frappe.realtime?.on) {
+            frappe.realtime.on("c4style_settings_changed", refreshSiteSettings);
+            settingsListenerInstalled = true;
+        }
+    }
     function start() {
         document.querySelectorAll("[data-c4style-settings-link]").forEach(link => link.remove());
         loadBootTheme();
         applyPersonal();
         refreshMenus();
+        installSettingsListener();
+        // Refresh stale boot settings and recover when websocket delivery is unavailable.
+        refreshSiteSettings();
+        window.addEventListener("focus", refreshSiteSettings);
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) refreshSiteSettings();
+        });
+        window.setInterval(() => {
+            installSettingsListener();
+            if (!document.hidden) refreshSiteSettings();
+        }, 30000);
         if (window.jQuery) window.jQuery(document).on("app_ready.c4style", loadBootTheme);
         new MutationObserver(refreshMenus).observe(document.body, { childList: true, subtree: true });
         if (frappe.router && frappe.router.on) frappe.router.on("change", () => {

@@ -45,6 +45,11 @@ class MenuTests(unittest.TestCase):
                 pages: {}, show_alert: () => {},
                 ui: {form: {on: (name, events) => { window.formEvents = events; }}},
                 call(options) {
+                    if (options.method === 'c4style.settings.get_settings') {
+                        options.callback({message:window.latestSiteSettings || frappe.boot.c4style.site});
+                        if (options.always) options.always();
+                        return;
+                    }
                     if (options.method === 'c4style.settings.get_palettes') {
                         if (options.callback) options.callback({message:frappe.boot.c4style.palettes});
                         return;
@@ -95,6 +100,15 @@ class MenuTests(unittest.TestCase):
         if not ready:
             self.page.evaluate('frappe.realtime.socket=null')
         self.page.add_script_tag(content=(ROOT/'c4style/public/js/notifications.js').read_text())
+
+    def test_site_settings_refresh_other_open_sessions(self):
+        self.page.evaluate('''()=>{
+            window.latestSiteSettings={primary:'#ee1122',navbarBackground:'#991122',announcementFontSize:24};
+            window.dispatchEvent(new Event('focus'));
+        }''')
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#ee1122')
+        self.assertEqual(self.page.evaluate('getComputedStyle(document.querySelector(".navbar")).backgroundColor'), 'rgb(153, 17, 34)')
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().announcementFontSize'), 24)
 
     def test_notification_badge_and_link_use_the_signed_in_user(self):
         self.load_notification_fixture({'unread_count':7,'notifications':[{'name':'old','subject':'Existing'}]})

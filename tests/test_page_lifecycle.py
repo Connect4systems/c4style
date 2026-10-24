@@ -43,6 +43,7 @@ class MenuTests(unittest.TestCase):
                 session: {user: 'normal@example.com'},
                 boot: {c4style: {site: {menuBackground:'#123456',menuDefaultCollapsed:false,headerStyle:'pill',rowStyle:'separated',inputBorderStyle:'dashed',fieldStyle:'boxed',buttonStyle:'filled',shadowStyle:'soft',menuBehavior:'click',showScrollButtons:true,nativeDrawers:true}, personal:{}, can_manage:false}},
                 pages: {}, show_alert: () => {},
+                realtime: {on: (name, handler) => {window.siteSettingsHandler=handler;}},
                 ui: {form: {on: (name, events) => { window.formEvents = events; }}},
                 call(options) {
                     if (options.method === 'c4style.settings.get_settings') {
@@ -109,6 +110,17 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().primary'), '#ee1122')
         self.assertEqual(self.page.evaluate('getComputedStyle(document.querySelector(".navbar")).backgroundColor'), 'rgb(153, 17, 34)')
         self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().announcementFontSize'), 24)
+
+    def test_site_theme_realtime_applies_immediately_and_ignores_older_fetch(self):
+        self.page.evaluate('''()=>{
+            frappe.call=options=>{window.pendingSiteRequest=options;};
+            window.dispatchEvent(new Event('focus'));
+            siteSettingsHandler({settings:{navbarBackground:'#bb1122',announcementFontSize:22}});
+            pendingSiteRequest.callback({message:{navbarBackground:'#123456'}});
+            pendingSiteRequest.always();
+        }''')
+        self.assertEqual(self.page.evaluate('getComputedStyle(document.querySelector(".navbar")).backgroundColor'), 'rgb(187, 17, 34)')
+        self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().announcementFontSize'), 22)
 
     def test_notification_badge_and_link_use_the_signed_in_user(self):
         self.load_notification_fixture({'unread_count':7,'notifications':[{'name':'old','subject':'Existing'}]})

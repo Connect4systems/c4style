@@ -313,23 +313,33 @@
         applyTheme(siteTheme);
     }
     let refreshingSettings = false;
-    let settingsListenerInstalled = false;
+    let settingsGeneration = 0;
+    let settingsRealtime = null;
     function refreshSiteSettings() {
         if (refreshingSettings || !frappe.boot?.c4style || !frappe.call) return;
         refreshingSettings = true;
+        const generation = settingsGeneration;
         frappe.call({
             method: "c4style.settings.get_settings",
             callback: response => {
-                if (response.message) applyTheme(response.message);
+                if (generation === settingsGeneration && response.message) applyTheme(response.message);
             },
             always: () => { refreshingSettings = false; },
         });
     }
     function installSettingsListener() {
-        if (!settingsListenerInstalled && frappe.realtime?.on) {
-            frappe.realtime.on("c4style_settings_changed", refreshSiteSettings);
-            settingsListenerInstalled = true;
+        if (settingsRealtime !== frappe.realtime && frappe.realtime?.on) {
+            if (settingsRealtime?.off) settingsRealtime.off("c4style_settings_changed", receiveSiteSettings);
+            frappe.realtime.on("c4style_settings_changed", receiveSiteSettings);
+            settingsRealtime = frappe.realtime;
         }
+    }
+    function receiveSiteSettings(data) {
+        if (data?.settings) {
+            settingsGeneration++;
+            applyTheme(data.settings);
+        }
+        else refreshSiteSettings();
     }
     function start() {
         document.querySelectorAll("[data-c4style-settings-link]").forEach(link => link.remove());
@@ -346,8 +356,12 @@
         window.setInterval(() => {
             installSettingsListener();
             if (!document.hidden) refreshSiteSettings();
-        }, 30000);
-        if (window.jQuery) window.jQuery(document).on("app_ready.c4style", loadBootTheme);
+        }, 5000);
+        if (window.jQuery) window.jQuery(document).on("app_ready.c4style", () => {
+            loadBootTheme();
+            installSettingsListener();
+            refreshSiteSettings();
+        });
         new MutationObserver(refreshMenus).observe(document.body, { childList: true, subtree: true });
         if (frappe.router && frappe.router.on) frappe.router.on("change", () => {
             syncNavigation();

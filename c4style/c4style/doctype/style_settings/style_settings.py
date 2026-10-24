@@ -23,4 +23,7 @@ class StyleSettings(Document):
 
     def on_update(self):
         frappe.clear_cache()
-        frappe.publish_realtime('c4style_settings_changed', after_commit=True)
+        frappe.publish_realtime(
+            'c4style_settings_changed', {'settings': document_settings(self)},
+            after_commit=True,
+        )

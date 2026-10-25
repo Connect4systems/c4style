@@ -7,7 +7,7 @@ from frappe.model.document import Document
 from c4style.settings import KEY, PALETTES
 
 
-class ColorPalette(Document):
+class ThemePlatteColor(Document):
     def before_validate(self):
         for field, default in PALETTES['C4Style'].items():
             if self.get(field) in (None, ''):

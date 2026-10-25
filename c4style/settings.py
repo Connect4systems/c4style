@@ -15,17 +15,17 @@ def get_palettes():
         frappe.throw('Please sign in', frappe.PermissionError)
     fields = list(PALETTES['C4Style'])
     return {row['name']: {field: row[field] for field in fields}
-            for row in frappe.get_all('Color Palette', filters={'enabled': 1},
+            for row in frappe.get_all('Theme Platte Color', filters={'enabled': 1},
                                       fields=['name', *fields], order_by='name')}
 
 
 @frappe.whitelist()
 def get_palette(name):
     if not isinstance(name, str):
-        frappe.throw('Select an enabled Color Palette')
+        frappe.throw('Select an enabled Theme Platte Color')
     palette = get_palettes().get(name)
     if palette is None:
-        frappe.throw('Select an enabled Color Palette')
+        frappe.throw('Select an enabled Theme Platte Color')
     return palette
 
 
@@ -150,8 +150,7 @@ def get_site_settings():
 
 
 def boot_session(bootinfo):
-    # Keep the legacy route for bookmarks, but expose only the native settings
-    # form in Desk's page search.
+    # Suppress stale Page metadata while upgraded sessions refresh their cache.
     page_info = bootinfo.get('page_info') if isinstance(bootinfo, dict) else getattr(bootinfo, 'page_info', None)
     if isinstance(page_info, dict):
         page_info.pop('c4style-settings', None)

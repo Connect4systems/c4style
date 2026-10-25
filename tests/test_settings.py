@@ -161,7 +161,7 @@ class SettingsTests(unittest.TestCase):
         fake.get_all.return_value = [dict(name='Company Blue', **colors)]
         self.assertEqual(settings.get_palettes(), {'Company Blue': colors})
         self.assertEqual(settings.get_palette('Company Blue')['primary'], '#123456')
-        fake.get_all.assert_called_with('Color Palette', filters={'enabled': 1},
+        fake.get_all.assert_called_with('Theme Platte Color', filters={'enabled': 1},
             fields=['name', *list(settings.PALETTES['C4Style'])], order_by='name')
         for name in ('Ocean', 'Deleted Palette'):
             with self.assertRaises(ValidationError): settings.get_palette(name)
@@ -179,7 +179,7 @@ class SettingsTests(unittest.TestCase):
 
     def test_palette_doctype_is_managed_only_by_requested_roles(self):
         schema = json.loads((Path(__file__).parents[1] /
-            'c4style/c4style/doctype/color_palette/color_palette.json').read_text())
+            'c4style/c4style/doctype/theme_platte_color/theme_platte_color.json').read_text())
         self.assertEqual(schema['allow_rename'], 1)
         self.assertEqual({p['role'] for p in schema['permissions']}, {'System Manager', 'Website Manager'})
         for permission in schema['permissions']:
@@ -218,9 +218,9 @@ class SettingsTests(unittest.TestCase):
         with patch.dict(sys.modules, {'frappe':service, 'c4style.settings':settings,
                                      'frappe.model.document':document}):
             spec = importlib.util.spec_from_file_location('palette_controller',
-                Path(__file__).parents[1] / 'c4style/c4style/doctype/color_palette/color_palette.py')
+                Path(__file__).parents[1] / 'c4style/c4style/doctype/theme_platte_color/theme_platte_color.py')
             module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
-            record = module.ColorPalette()
+            record = module.ThemePlatteColor()
             colors = {'primary':'#123456'}
             record.get = colors.get
             record.set = colors.__setitem__

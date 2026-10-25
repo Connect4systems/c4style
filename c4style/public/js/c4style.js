@@ -292,14 +292,7 @@
         get_theme: () => ({ ...theme }), get_site_theme: () => ({ ...siteTheme }),
         get_personal: () => ({ ...personal }), save_personal: savePersonal,
     };
-    // Keep bookmarks working while the native Single DocType enforces permissions.
-    frappe.standard_pages = frappe.standard_pages || {};
-    frappe.standard_pages["c4style-settings"] = () => {
-        const wrapper = frappe.container.add_page("c4style-settings");
-        wrapper.page_name = "c4style-settings";
-        frappe.ui.make_app_page({ parent: wrapper, title: __("Style Settings"), single_column: true });
-        frappe.set_route("Form", "Style Settings");
-    };
+    // Discard cached code for the retired Page on upgraded browsers.
     try { localStorage.removeItem("_page:c4style-settings"); } catch (error) { /* Storage is optional. */ }
     function loadBootTheme() {
         const current = frappe.boot && frappe.boot.c4style;

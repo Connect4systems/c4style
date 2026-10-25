@@ -43,7 +43,7 @@ bench restart
 
 Desk asset URLs now include a content fingerprint so changed CSS/JavaScript files get new browser cache keys after deployment. Clear the site cache and restart workers after deploying hook changes. Saving Style Settings broadcasts an update after commit. Open sessions fetch the saved settings immediately through realtime events, when returning to the tab, and every 5 seconds as a fallback. Users with an allowed personal palette keep their chosen colors.
 
-Hard-refresh the browser. Migration installs the Single DocType and the C4Style workspace shortcut. Existing `/app/c4style-settings` bookmarks redirect to the native form.
+Hard-refresh the browser. Migration installs the Single DocType and the C4Style workspace shortcut. The retired `/app/c4style-settings` Page is removed; use `/app/style-settings`.
 
 The visual direction is inspired by the [Kanak Infosystems theme walkthrough](https://www.youtube.com/watch?v=B_0SsIDih1k). This app implements its own styles and navigation; it does not include the vendor's theme code.
 
@@ -75,9 +75,9 @@ Create notifications manually using Frappe's Notification form. C4Style's workfl
 notification extension has been removed; Administration handles approval actions.
 After upgrading, run site migration to remove the retired custom controls.
 
-#### Color palettes
+#### Theme Platte Colors
 
-System Manager and Website Manager can manage **Color Palette** records, including
+System Manager and Website Manager can manage **Theme Platte Color** records, including
 adding, editing, renaming, deleting and enabling them. Only enabled records are
 offered in Style Settings and Appearance tools. Selecting a palette fetches its
 saved colors; site colors can still be customized afterward. Personal selection
@@ -90,3 +90,5 @@ palette restores the shared theme on refresh. Existing shared colors remain save
 until a manager selects a palette again or edits them. Rename preserves personal
 selections. Manual colors previously selected as Custom are preserved with an
 empty palette Link.
+
+After this upgrade, run `bench --site your-site migrate`, clear the site cache and restart. The migration renames Color Palette to Theme Platte Color while preserving palette records and links, and deletes the retired c4style-settings Page.

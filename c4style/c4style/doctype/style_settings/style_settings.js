@@ -48,10 +48,12 @@ const c4style_form_events = {
         frm.set_query("palette", () => ({filters: {enabled: 1}}));
     },
     refresh(frm) {
-        frm.set_intro(__("Choose a palette, then customize its colors and typography. Save to apply it to everyone. Each user controls their own menu and workspace width."));
+        frm.set_intro(__("Choose a Theme Platte Color, then customize its colors and typography. Save to apply it to everyone. Each user controls their own menu and workspace width."));
         if (frm.add_custom_button && frm.doc.palette) {
             frm.add_custom_button(__("Reset palette colors"), async () => {
-                const response = await frappe.call({method: "c4style.settings.get_palette", args: {name: frm.doc.palette}});
+                const selected = frm.doc.palette;
+                const response = await frappe.call({method: "c4style.settings.get_palette", args: {name: selected}});
+                if (frm.doc.palette !== selected || !response.message) return;
                 await frm.set_value(response.message);
                 c4style_preview(frm);
             });

@@ -6,4 +6,5 @@ c4style.rename_theme_platte_color
 [post_model_sync]
 c4style.remove_settings_page
 c4style.install_palettes
+c4style.initialize_theme_color_platte
 # Patches added in this section will be executed after doctypes are migrated

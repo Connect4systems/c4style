@@ -72,8 +72,8 @@
   {
    "fieldname": "palette",
    "fieldtype": "Link",
-   "label": "Theme Platte Color",
-   "options": "Theme Platte Color"
+   "label": "Theme Color Platte",
+   "options": "Theme Color Platte"
   },
   {
    "fieldname": "allow_user_themes",

@@ -75,9 +75,9 @@ Create notifications manually using Frappe's Notification form. C4Style's workfl
 notification extension has been removed; Administration handles approval actions.
 After upgrading, run site migration to remove the retired custom controls.
 
-#### Theme Platte Colors
+#### Theme Color Plattes
 
-System Manager and Website Manager can manage **Theme Platte Color** records, including
+System Manager and Website Manager can manage **Theme Color Platte** records, including
 adding, editing, renaming, deleting and enabling them. Only enabled records are
 offered in Style Settings and Appearance tools. Selecting a palette fetches its
 saved colors; site colors can still be customized afterward. Personal selection
@@ -91,4 +91,4 @@ until a manager selects a palette again or edits them. Rename preserves personal
 selections. Manual colors previously selected as Custom are preserved with an
 empty palette Link.
 
-After this upgrade, run `bench --site your-site migrate`, clear the site cache and restart. The migration renames Color Palette to Theme Platte Color while preserving palette records and links, and deletes the retired c4style-settings Page.
+After this upgrade, run `bench --site your-site migrate`, clear the site cache and restart. Model sync creates the independent Theme Color Platte DocType and a one-time patch seeds its built-in themes. The existing Color Palette DocType and its records are never renamed, copied, merged or deleted. Saved site colors are preserved; an unavailable preset selection is cleared. The retired c4style-settings Page is removed.

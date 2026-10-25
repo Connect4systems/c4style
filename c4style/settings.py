@@ -15,17 +15,17 @@ def get_palettes():
         frappe.throw('Please sign in', frappe.PermissionError)
     fields = list(PALETTES['C4Style'])
     return {row['name']: {field: row[field] for field in fields}
-            for row in frappe.get_all('Theme Platte Color', filters={'enabled': 1},
+            for row in frappe.get_all('Theme Color Platte', filters={'enabled': 1},
                                       fields=['name', *fields], order_by='name')}
 
 
 @frappe.whitelist()
 def get_palette(name):
     if not isinstance(name, str):
-        frappe.throw('Select an enabled Theme Platte Color')
+        frappe.throw('Select an enabled Theme Color Platte')
     palette = get_palettes().get(name)
     if palette is None:
-        frappe.throw('Select an enabled Theme Platte Color')
+        frappe.throw('Select an enabled Theme Color Platte')
     return palette
 
 

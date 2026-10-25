@@ -48,7 +48,7 @@ const c4style_form_events = {
         frm.set_query("palette", () => ({filters: {enabled: 1}}));
     },
     refresh(frm) {
-        frm.set_intro(__("Choose a Theme Platte Color, then customize its colors and typography. Save to apply it to everyone. Each user controls their own menu and workspace width."));
+        frm.set_intro(__("Choose a Theme Color Platte, then customize its colors and typography. Save to apply it to everyone. Each user controls their own menu and workspace width."));
         if (frm.add_custom_button && frm.doc.palette) {
             frm.add_custom_button(__("Reset palette colors"), async () => {
                 const selected = frm.doc.palette;

@@ -1,6 +1,6 @@
 {
  "doctype": "DocType",
- "name": "Theme Platte Color",
+ "name": "Theme Color Platte",
  "module": "C4Style",
  "autoname": "field:palette_name",
  "allow_rename": 1,

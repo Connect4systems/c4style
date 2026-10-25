@@ -134,6 +134,47 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('route'),['List','Notification Log'])
         self.assertEqual(self.page.evaluate('frappe.route_options'),{'for_user':'normal@example.com'})
 
+    def test_open_notification_marks_read_and_recounts_remaining_unread(self):
+        self.load_notification_fixture({'unread_count':103,'notifications':[]})
+        badge = self.page.locator('[data-c4style-tools] .c4style-notification-count')
+        self.assertEqual(badge.inner_text(), '103')
+        self.page.evaluate('''()=>{
+            const summaryCall=frappe.call;
+            frappe.call=options=>{
+                if(!options.method.endsWith('.mark_as_read')) return summaryCall(options);
+                window.readRequest=options.args;
+                notificationSummary={unread_count:102,notifications:[]};
+                options.callback({});options.always();
+            };
+            window.readForm={doc:{name:'own-alert',for_user:frappe.session.user,read:0},refresh_field:()=>{}};
+            formEvents.refresh(readForm);
+        }''')
+        self.assertEqual(self.page.evaluate('readRequest.docname'), 'own-alert')
+        self.assertEqual(self.page.evaluate('readForm.doc.read'), 1)
+        self.assertEqual(badge.inner_text(), '102')
+        self.page.evaluate('''()=>{
+            window.readRequest=null;
+            formEvents.refresh({doc:{name:'other',for_user:'other@example.com',read:0}});
+        }''')
+        self.assertIsNone(self.page.evaluate('readRequest'))
+
+    def test_notification_rows_style_unread_and_read_after_render(self):
+        self.page.evaluate('''()=>{
+            frappe.listview_settings={};
+            const result=document.createElement('div');result.id='notification-rows';
+            result.innerHTML=['unread','read'].map(name=>`<div class="list-row-container"><input data-name="${name}"><div class="list-subject"><a><b>${name}</b></a></div></div>`).join('');
+            document.body.appendChild(result);
+            window.notificationList={data:[{name:'unread',read:0},{name:'read',read:1}],
+                $result:{find:selector=>({each:callback=>result.querySelectorAll(selector).forEach(row=>callback.call(row))})}};
+        }''')
+        self.page.add_script_tag(content=(ROOT/'c4style/public/js/notification_log_list.js').read_text())
+        self.page.evaluate("frappe.listview_settings['Notification Log'].before_render(notificationList)")
+        self.page.wait_for_selector('.c4style-notification-unread')
+        self.assertEqual(self.page.locator('.c4style-notification-unread b').evaluate('(el)=>getComputedStyle(el).fontWeight'), '700')
+        self.assertEqual(self.page.locator('.c4style-notification-read b').evaluate('(el)=>getComputedStyle(el).fontWeight'), '400')
+        self.page.evaluate("notificationList.data[0].read=1;frappe.listview_settings['Notification Log'].before_render(notificationList)")
+        self.page.wait_for_function("document.querySelectorAll('.c4style-notification-unread').length===0")
+
     def test_notification_listener_waits_for_socket_startup_and_installs_only_once(self):
         self.page.evaluate('''()=>{
             window.jqueryHandlers={};

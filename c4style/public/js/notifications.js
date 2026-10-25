@@ -26,7 +26,7 @@
                 badge = document.createElement('span'); badge.className = 'c4style-notification-count';
                 badge.setAttribute('aria-hidden', 'true'); element.appendChild(badge);
             }
-            const label = unreadCount > 99 ? '99+' : String(unreadCount);
+            const label = String(unreadCount);
             if (badge.textContent !== label) badge.textContent = label;
             badge.hidden = unreadCount === 0;
             const base = element.matches('[data-c4style-tools]') ? __('Appearance tools') : __('My notifications');
@@ -118,12 +118,32 @@
         frappe.realtime.on('indicator_hide', () => refresh(false));
     }
     api.refresh_notifications = () => refresh(false);
+    // Reading a log through its form must update the stored read flag, too.
+    frappe.ui.form.on('Notification Log', {
+        refresh(frm) {
+            if (frm.doc.for_user !== frappe.session.user || Number(frm.doc.read) !== 0 || frm.__c4style_marking_read) return;
+            frm.__c4style_marking_read = true;
+            frappe.call({
+                method: 'frappe.desk.doctype.notification_log.notification_log.mark_as_read',
+                args: { docname: frm.doc.name },
+                callback: response => {
+                    if (response.exc) return;
+                    frm.doc.read = 1;
+                    frm.refresh_field('read');
+                    refresh();
+                },
+                always: () => { frm.__c4style_marking_read = false; },
+            });
+        },
+    });
     function start() {
         installRealtime(); refresh(); syncBadge();
         if (window.jQuery) {
             window.jQuery(document).on('app_ready.c4styleNotifications', () => { installRealtime(); refresh(); });
             window.jQuery(document).on('ajaxComplete.c4styleNotifications', (event, xhr, settings) => {
-                if (xhr.status >= 200 && xhr.status < 300 && /notification_log\.(mark_as_read|mark_all_as_read)/.test(settings.url || '')) refresh();
+                const method = `${settings.url || ''} ${typeof settings.data === 'string' ? settings.data : settings.data?.cmd || ''}`;
+                if (xhr.status >= 200 && xhr.status < 300 && !xhr.responseJSON?.exc
+                    && /notification_log\.(mark_as_read|mark_all_as_read)/.test(method)) refresh();
             });
         }
         document.addEventListener('pointerdown', unlockAudio, { passive: true });

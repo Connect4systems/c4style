@@ -944,6 +944,8 @@ body[data-menu-behavior="hover"].c4style-menu-collapsed:not(.c4style-has-app-men
 
 .c4style-notification-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding-inline: 4px; border-radius: 12px; background: #b42318; color: #fff; font-size: 11px; line-height: 1; font-weight: 700; }
 .c4style-notification-count[hidden] { display: none; }
+.c4style-notification-unread .list-subject, .c4style-notification-unread .list-subject * { font-weight: 700 !important; }
+.c4style-notification-read .list-subject, .c4style-notification-read .list-subject * { font-weight: 400 !important; }
 .c4style-tools-trigger .c4style-notification-count { position: absolute; top: -7px; inset-inline-start: -7px; border: 2px solid var(--c4style-panel-bg); }
 [data-c4style-notifications-link] .c4style-notification-count { margin-inline-start: 6px; }
 .c4style-notification-toast { position: fixed; inset: auto; inset-block-start: 90px; inset-inline-end: 20px; z-index: 1080; width: min(360px, calc(100vw - 32px)); box-sizing: border-box; margin: 0; padding: 18px; border: 1px solid var(--c4style-row-border); border-radius: 12px; background: var(--c4style-panel-bg); color: var(--text-color, #36414c); box-shadow: 0 6px 28px rgb(0 0 0 / 20%); }

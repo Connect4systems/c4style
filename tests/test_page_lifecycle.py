@@ -168,12 +168,19 @@ class MenuTests(unittest.TestCase):
                 $result:{find:selector=>({each:callback=>result.querySelectorAll(selector).forEach(row=>callback.call(row))})}};
         }''')
         self.page.add_script_tag(content=(ROOT/'c4style/public/js/notification_log_list.js').read_text())
-        self.page.evaluate("frappe.listview_settings['Notification Log'].before_render(notificationList)")
+        self.page.evaluate("window.cur_list=notificationList;frappe.listview_settings['Notification Log'].before_render()")
         self.page.wait_for_selector('.c4style-notification-unread')
         self.assertEqual(self.page.locator('.c4style-notification-unread b').evaluate('(el)=>getComputedStyle(el).fontWeight'), '700')
         self.assertEqual(self.page.locator('.c4style-notification-read b').evaluate('(el)=>getComputedStyle(el).fontWeight'), '400')
-        self.page.evaluate("notificationList.data[0].read=1;frappe.listview_settings['Notification Log'].before_render(notificationList)")
+        self.assertEqual(self.page.locator('.c4style-notification-unread .c4style-notification-status').inner_text(), 'Unread')
+        self.assertEqual(self.page.locator('.c4style-notification-read .c4style-notification-status').inner_text(), 'Read')
+        self.assertNotEqual(self.page.locator('.c4style-notification-unread b').evaluate('(el)=>getComputedStyle(el).color'),
+                            self.page.locator('.c4style-notification-read b').evaluate('(el)=>getComputedStyle(el).color'))
+        self.page.evaluate("notificationList.data[0].read=1;frappe.listview_settings['Notification Log'].before_render()")
         self.page.wait_for_function("document.querySelectorAll('.c4style-notification-unread').length===0")
+        self.assertEqual(self.page.locator('.c4style-notification-status').all_text_contents(), ['Read', 'Read'])
+        self.page.evaluate("frappe.listview_settings['Notification Log'].before_render()")
+        self.assertEqual(self.page.locator('.c4style-notification-status').count(), 2)
 
     def test_notification_listener_waits_for_socket_startup_and_installs_only_once(self):
         self.page.evaluate('''()=>{

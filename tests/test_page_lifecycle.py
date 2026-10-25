@@ -628,6 +628,35 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('JSON.parse(deleteRequest.args.names)'),['alert-one','alert-two'])
         self.assertTrue(self.page.evaluate('listRefreshed && badgeRefreshed'))
 
+    def test_notification_standard_status_select_preserves_unread_zero_and_can_clear(self):
+        self.page.evaluate('''()=>{
+            frappe.listview_settings={};window.statusRefreshes=0;window.addedStatusFields=0;
+            window.statusList={page:{add_action_item:()=>{},add_field:(df,parent)=>{
+                window.addedStatusFields++;
+                window.statusDefinition=df;window.statusParent=parent;
+                const select=document.createElement('select');select.id='notification-status-filter';
+                df.options.forEach(option=>select.add(new Option(option.label,option.value)));
+                select.value=df.default;select.onchange=df.onchange;document.body.appendChild(select);
+                return {get_value:()=>select.value};
+            }},filter_area:{standard_filters_wrapper:'standard-wrapper',
+                get:()=>[['Notification Log','for_user','=','normal@example.com'],['Notification Log','read','=',0]],
+                filter_list:{get_filter:()=>null},
+                debounced_refresh_list_view:()=>{statusRefreshes++;}}};
+        }''')
+        self.page.add_script_tag(content=(ROOT/'c4style/public/js/notification_log_list.js').read_text())
+        self.page.evaluate("frappe.listview_settings['Notification Log'].onload(statusList)")
+        select=self.page.locator('#notification-status-filter')
+        self.assertEqual(select.input_value(), '0')
+        self.assertEqual(self.page.evaluate('statusDefinition.fieldname'), 'read')
+        self.assertEqual(self.page.evaluate('statusParent'), 'standard-wrapper')
+        select.select_option('1')
+        self.assertEqual(self.page.evaluate('statusList.__c4style_status_filter.get_value()'), '1')
+        select.select_option('')
+        self.assertEqual(self.page.evaluate('statusList.__c4style_status_filter.get_value()'), '')
+        self.assertEqual(self.page.evaluate('statusRefreshes'), 2)
+        self.page.evaluate("frappe.listview_settings['Notification Log'].onload(statusList)")
+        self.assertEqual(self.page.evaluate('addedStatusFields'), 1)
+
     def test_grouping_loaded_rows_preserves_links_selection_and_ungroup_order(self):
         self.page.evaluate('''() => {
             const result=document.createElement('div');result.id='group-result';

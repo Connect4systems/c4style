@@ -34,6 +34,28 @@
     settings.onload = function (listview) {
         activeList = listview;
         if (previous) previous.call(this, listview);
+        if (listview.page.add_field && listview.filter_area && !listview.__c4style_status_filter) {
+            const area = listview.filter_area;
+            const existing = area.get().find(filter => filter[0] === 'Notification Log'
+                && filter[1] === 'read' && filter[2] === '=');
+            // Use the real read field so URL filters, saved filters and Clear work natively.
+            listview.__c4style_status_filter = listview.page.add_field({
+                fieldname: 'read', label: __('Status'), fieldtype: 'Select',
+                condition: '=', is_filter: 1,
+                options: [
+                    {label: __('All'), value: ''},
+                    {label: __('Unread'), value: '0'},
+                    {label: __('Read'), value: '1'},
+                ],
+                default: existing ? String(existing[3]) : '',
+                onchange: () => {
+                    // Drop an advanced-filter copy when switching to the standard select.
+                    area.filter_list?.get_filter('read')?.remove();
+                    area.debounced_refresh_list_view();
+                },
+            }, area.standard_filters_wrapper);
+            if (existing) area.filter_list?.get_filter('read')?.remove();
+        }
         listview.page.add_action_item(__('Delete selected notifications'), () => {
             const names = listview.get_checked_items().map(row => row.name);
             if (!names.length) {

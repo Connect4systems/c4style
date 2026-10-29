@@ -92,7 +92,7 @@
             callback: () => {
                 if (frappe.c4style.sync_tools) frappe.c4style.sync_tools();
                 if (typeof onSaved === "function") onSaved();
-                frappe.show_alert({ message: key === "notes" ? __("Notes saved") : __("Layout preference saved"), indicator: "green" });
+                frappe.show_alert({ message: key === "notes" ? __("Notes saved") : key === "notificationSound" ? __("Notification sound preference saved") : __("Layout preference saved"), indicator: "green" });
             },
             error: () => {
                 personal[key] = previous;

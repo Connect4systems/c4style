@@ -44,7 +44,7 @@ DEFAULTS = dict(primary='#714B67', accent='#017E84', background='#E5E8EB',
                 menuDefaultCollapsed=True, showScrollButtons=True, nativeDrawers=True,
                 enableAnnouncement=False, announcementText='', announcementSpeed=24, announcementFontSize=14,
                 announcementBackground='#F0EDF7', announcementColor='#36414C', notes=[],
-                allowUserThemes=False, themePalette='')
+                allowUserThemes=False, themePalette='', notificationSound=True)
 
 
 def validate(settings):
@@ -94,7 +94,7 @@ def validate(settings):
             if valid:
                 valid = len({note['id'] for note in value}) == len(value) and len(json.dumps(value).encode('utf-8')) <= 48000
         elif key in ('workspaceWide', 'menuCollapsed', 'menuDefaultCollapsed',
-                     'showScrollButtons', 'nativeDrawers', 'enableAnnouncement', 'allowUserThemes'):
+                     'showScrollButtons', 'nativeDrawers', 'enableAnnouncement', 'allowUserThemes', 'notificationSound'):
             valid = type(value) is bool
         if not valid:
             frappe.throw('Invalid style setting: ' + key)
@@ -132,7 +132,7 @@ SITE_FIELDS = dict(allowUserThemes='allow_user_themes', primary='primary', accen
                    nativeDrawers='native_drawers', enableAnnouncement='enable_announcement',
                    announcementFontSize='announcement_font_size', announcementText='announcement_text', announcementSpeed='announcement_speed',
                    announcementBackground='announcement_background', announcementColor='announcement_color')
-PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed', 'notes', 'themePalette'}
+PERSONAL_FIELDS = {'workspaceWide', 'direction', 'menuCollapsed', 'notes', 'themePalette', 'notificationSound'}
 
 
 def document_settings(doc):

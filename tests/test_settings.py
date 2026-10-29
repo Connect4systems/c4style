@@ -66,6 +66,23 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(boot.page_info, {'other-page': {'title': 'Other Page'}})
         self.assertIn('site', boot.c4style)
 
+    def test_notification_sound_is_a_validated_account_preference(self):
+        for enabled in (False,True):
+            result=settings.save_settings({'notificationSound':enabled})
+            self.assertEqual(result['notificationSound'],enabled)
+            args=fake.defaults.set_default.call_args
+            self.assertEqual(args.kwargs['parent'],'user@example.com')
+            self.assertEqual(json.loads(args.args[1])['notificationSound'],enabled)
+        for invalid in (0,1,'true',None):
+            with self.assertRaises(ValidationError):settings.validate({'notificationSound':invalid})
+
+    def test_boot_includes_saved_notification_sound_for_current_account(self):
+        fake.defaults.get_defaults_for.return_value={settings.KEY:json.dumps({'notificationSound':False})}
+        boot=types.SimpleNamespace(page_info={})
+        settings.boot_session(boot)
+        self.assertIs(boot.c4style['personal']['notificationSound'],False)
+        fake.defaults.get_defaults_for.assert_called_with('user@example.com')
+
     def test_non_admin_cannot_publish(self):
         with self.assertRaises(PermissionError):
             settings.save_settings({}, 'site')

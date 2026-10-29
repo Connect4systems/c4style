@@ -233,12 +233,34 @@
                 else { frappe.route_options = { for_user: frappe.session.user }; frappe.set_route("List", "Notification Log"); }
             });
             actions.appendChild(notifications);
+            const sound = button("Notification sound", () => {
+                const enabled = api.get_personal().notificationSound === false;
+                // Resume audio inside the user's click before saving asynchronously.
+                if (enabled) api.unlock_notification_audio?.(true);
+                api.save_personal("notificationSound", enabled, () => {
+                    if (enabled) api.unlock_notification_audio?.().then(() => api.preview_notification_sound?.());
+                });
+                syncNotificationSound();
+            });
+            sound.dataset.c4styleNotificationSound = "true";
+            sound.dataset.c4stylePersonalAction = "true";
+            sound.setAttribute("role", "switch");
+            sound.setAttribute("aria-label", __("Notification sound"));
+            actions.appendChild(sound);
             if (api.get_theme().allowUserThemes) actions.append(button("Choose my theme", () => openPalettes(true)));
             if ((frappe.boot.c4style || {}).can_manage) {
                 actions.append(button("Choose site theme", () => openPalettes(false)));
                 actions.append(button("Style Settings", () => { element.close(); frappe.set_route("Form", "Style Settings"); }));
             }
             body.appendChild(actions);
+            syncNotificationSound(actions);
+        });
+    }
+    function syncNotificationSound(root = document) {
+        const enabled = api.get_personal().notificationSound !== false;
+        root.querySelectorAll("[data-c4style-notification-sound]").forEach(control => {
+            control.textContent = __("Notification sound") + ": " + (enabled ? __("On") : __("Off"));
+            control.setAttribute("aria-checked", String(enabled));
         });
     }
     function syncAnnouncement() {
@@ -408,6 +430,7 @@
         });
     }
     function syncTools() {
+        syncNotificationSound();
         if (!document.querySelector("[data-c4style-tools]")) {
             const trigger = button("\u25c8", openTools, "c4style-tools-trigger"); trigger.dataset.c4styleTools = "true";
             trigger.title = __("Appearance tools"); trigger.setAttribute("aria-label", __("Appearance tools")); trigger.setAttribute("aria-haspopup", "dialog");

@@ -28,6 +28,34 @@ def _is_draft_state(state):
     return str(state or '').strip().casefold() == 'draft'
 
 
+def _load_documents(doctype, candidates):
+    """Batch-load complete documents after get_list has selected readable names."""
+    names = [row.name for row in candidates]
+    if not names:
+        return []
+    meta = frappe.get_meta(doctype)
+    if getattr(meta, 'is_virtual', False):
+        return [frappe.get_doc(doctype, name) for name in names]
+    parents = {row['name']: dict(row, doctype=doctype) for row in frappe.get_all(
+        doctype, filters={'name': ['in', names]}, fields=['*'], limit_page_length=0)}
+    # Conditions and custom permission hooks may inspect child tables. Preserve
+    # the complete document instead of evaluating against a partial list row.
+    if not parents:
+        return []
+    for field in meta.get_table_fields():
+        for parent in parents.values():
+            parent[field.fieldname] = []
+        if getattr(frappe.get_meta(field.options), 'is_virtual', False):
+            continue
+        children = frappe.get_all(field.options,
+            filters={'parent': ['in', list(parents)], 'parenttype': doctype,
+                     'parentfield': field.fieldname},
+            fields=['*'], order_by='idx asc', limit_page_length=0)
+        for child in children:
+            parents[child['parent']][field.fieldname].append(dict(child, doctype=field.options))
+    return [frappe.get_doc(parents[name]) for name in names if name in parents]
+
+
 @frappe.whitelist()
 def get_notifications():
     """Live actionable documents; never infer eligibility from notification logs."""
@@ -40,7 +68,7 @@ def get_notifications():
     records = []
     seen = set()
     for row in frappe.get_all('Workflow', filters={'is_active': 1}, fields=['name']):
-        workflow = frappe.get_doc('Workflow', row.name)
+        workflow = frappe.get_cached_doc('Workflow', row.name)
         # A workflow can require approval while docstatus is still 0. Exclude
         # the Draft workflow state, rather than all unsubmitted documents.
         states = list({t.state for t in workflow.transitions
@@ -54,8 +82,7 @@ def get_notifications():
                 filters={workflow.workflow_state_field: ['in', states], 'docstatus': 0},
                 fields=['name'], order_by='modified desc, name desc',
                 limit_start=start, limit_page_length=200)
-            for candidate in candidates:
-                doc = frappe.get_doc(workflow.document_type, candidate.name)
+            for doc in _load_documents(workflow.document_type, candidates):
                 if doc.docstatus != 0 or _is_draft_state(doc.get(workflow.workflow_state_field)):
                     continue
                 transitions = [t for t in get_transitions(doc, workflow)

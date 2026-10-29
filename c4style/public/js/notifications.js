@@ -10,6 +10,8 @@
     let queuedNotify = false;
     let realtime = null;
     let audio = null;
+    let lastSuccess = 0;
+    let listSignature = null;
     let storageKey = null;
     const known = new Set();
     function loadKnown() {
@@ -73,7 +75,9 @@
             element.title = title;
         });
     }
-    async function unlockAudio() {
+    const soundEnabled = () => api.get_personal().notificationSound !== false;
+    async function unlockAudio(force = false) {
+        if (!soundEnabled() && force !== true) return;
         try {
             const Context = window.AudioContext || window.webkitAudioContext;
             if (!Context) return;
@@ -82,7 +86,7 @@
         } catch (error) { /* Visual notifications remain available if audio is blocked. */ }
     }
     function playBell() {
-        if (!audio || audio.state !== 'running') return;
+        if (!soundEnabled() || !audio || audio.state !== 'running') return;
         try {
             [880, 1760].forEach((frequency, index) => {
                 const oscillator = audio.createOscillator(); const gain = audio.createGain();
@@ -95,6 +99,8 @@
             });
         } catch (error) { /* A sound failure must not interrupt notification delivery. */ }
     }
+    api.unlock_notification_audio = unlockAudio;
+    api.preview_notification_sound = playBell;
     function popup(records, ownerUpdate = false) {
         document.querySelector('.c4style-notification-toast')?.remove();
         const toast = document.createElement('aside'); toast.className = 'c4style-notification-toast';
@@ -111,7 +117,7 @@
         const close = document.createElement('button'); close.type = 'button'; close.className = 'btn btn-default btn-sm';
         close.textContent = __('Dismiss'); close.addEventListener('click', () => toast.remove());
         const actions = document.createElement('div'); actions.className = 'c4style-notification-actions'; actions.append(view, close);
-        if (!audio || audio.state !== 'running') {
+        if (soundEnabled() && (!audio || audio.state !== 'running')) {
             const enable = document.createElement('button'); enable.type = 'button'; enable.className = 'btn btn-default btn-sm';
             enable.textContent = __('Enable bell sound'); enable.addEventListener('click', async () => {
                 await unlockAudio(); playBell(); if (audio?.state === 'running') enable.remove();
@@ -124,10 +130,13 @@
         if (typeof toast.showPopover === 'function') { toast.setAttribute('popover', 'manual'); toast.showPopover(); }
         playBell();
     }
-    function refresh(notify = false) {
+    function refresh(notify = false, force = false) {
         if (!frappe.session?.user || frappe.session.user === 'Guest') return;
         loadKnown();
-        if (fetching) { queued = true; queuedNotify = queuedNotify || notify; return; }
+        if (fetching) {
+            queued = queued || force; queuedNotify = queuedNotify || notify; return;
+        }
+        if (!force && lastSuccess && Date.now() - lastSuccess < 2000) return;
         fetching = true;
         frappe.call({ method: 'c4style.notifications.get_notifications',
             callback: response => {
@@ -136,7 +145,12 @@
                 const records = result.notifications.filter(record => record && typeof record.name === 'string');
                 const fresh = records.filter(record => !known.has(record.name));
                 unreadCount = Math.max(0, result.pending_count);
-                pending = records; syncBadge(); renderList();
+                const signature = JSON.stringify(records);
+                pending = records; syncBadge();
+                if (signature !== listSignature) { listSignature = signature; renderList(); }
+                lastSuccess = Date.now();
+                notify = notify || queuedNotify;
+                if (!queued) queuedNotify = false;
                 const enabled = frappe.boot?.notification_settings?.enabled;
                 if (notify && fresh.length && enabled !== false && enabled !== 0) popup(fresh);
                 known.clear(); records.forEach(record => known.add(record.name));
@@ -145,23 +159,23 @@
             error: () => {},
             always: () => {
                 fetching = false;
-                if (queued) { const next = queuedNotify; queued = queuedNotify = false; refresh(next); }
+                if (queued) { const next = queuedNotify; queued = queuedNotify = false; refresh(next, true); }
             },
         });
     }
     function installRealtime() {
         if (!frappe.realtime?.on || !frappe.realtime.socket || realtime === frappe.realtime.socket) return;
         realtime = frappe.realtime.socket;
-        frappe.realtime.on('notification', () => refresh(true));
-        frappe.realtime.on('doc_update', () => refresh(true));
+        frappe.realtime.on('notification', () => refresh(true, true));
+        frappe.realtime.on('doc_update', () => refresh(true, true));
         frappe.realtime.on('c4style_workflow_owner_update', record => {
             const enabled = frappe.boot?.notification_settings?.enabled;
             if (record?.doctype && record?.document_name && enabled !== false && enabled !== 0) popup([record], true);
-            refresh(true);
+            refresh(true, true);
         });
-        frappe.realtime.on('indicator_hide', () => refresh(false));
+        frappe.realtime.on('indicator_hide', () => refresh(false, true));
     }
-    api.refresh_notifications = () => refresh(false);
+    api.refresh_notifications = () => refresh(false, true);
     function start() {
         installRealtime(); refresh(true); syncBadge();
         if (window.jQuery) {
@@ -169,7 +183,7 @@
             window.jQuery(document).on('ajaxComplete.c4styleNotifications', (event, xhr, settings) => {
                 const method = `${settings.url || ''} ${typeof settings.data === 'string' ? settings.data : settings.data?.cmd || ''}`;
                 if (xhr.status >= 200 && xhr.status < 300 && !xhr.responseJSON?.exc
-                    && /(apply_workflow|frappe\.desk\.form\.(save|run_method))/.test(method)) refresh();
+                    && /(apply_workflow|frappe\.desk\.form\.(save|run_method))/.test(method)) refresh(false, true);
             });
         }
         document.addEventListener('pointerdown', unlockAudio, { passive: true });

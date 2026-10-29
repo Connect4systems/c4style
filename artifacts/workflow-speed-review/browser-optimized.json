@@ -1,0 +1,15 @@
+{
+  "browser_local_notification_asset": true,
+  "backend": "currently deployed, before batch optimization",
+  "startup_requests": 1,
+  "requests_after_open": 1,
+  "open_list_ms": 248.0,
+  "list_rows": 57,
+  "unchanged_list_preserves_rows": true,
+  "document_navigation": [
+    "Form",
+    "Costing Note",
+    "COS-Note-2026-00179"
+  ],
+  "browser_errors": []
+}

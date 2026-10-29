@@ -166,6 +166,71 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate("JSON.parse(sessionStorage.getItem('c4style-pending-workflows:normal@example.com'))"),['late'])
         self.assertIsNone(self.page.evaluate("sessionStorage.getItem('c4style-pending-workflows:undefined')"))
 
+    def test_notification_startup_and_open_reuse_recent_response(self):
+        self.load_notification_fixture({'pending_count':1,'notifications':[{'name':'existing','subject':'Pending'}]})
+        self.page.evaluate("window.notificationFetches=0;const summaryCall=frappe.call;frappe.call=options=>{if(options.method==='c4style.notifications.get_notifications')notificationFetches++;return summaryCall(options)};frappe.c4style.open_notifications()")
+        self.assertEqual(self.page.evaluate('notificationFetches'),0)
+        self.page.evaluate('frappe.c4style.refresh_notifications()')
+        self.assertEqual(self.page.evaluate('notificationFetches'),1)
+
+    def test_notification_unchanged_response_preserves_list_elements(self):
+        self.load_notification_fixture({'pending_count':1,'notifications':[{'name':'existing','subject':'Pending'}]})
+        self.page.evaluate("frappe.c4style.open_notifications();window.firstPendingLink=document.querySelector('#pending-workflows a');frappe.c4style.refresh_notifications()")
+        self.assertTrue(self.page.evaluate("firstPendingLink===document.querySelector('#pending-workflows a')"))
+
+    def test_notification_focus_events_share_inflight_request(self):
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
+        self.page.evaluate("window.notificationFetches=0;frappe.call=options=>{if(options.method==='c4style.notifications.get_notifications'){notificationFetches++;window.pendingNotificationRequest=options}};frappe.c4style.refresh_notifications();window.dispatchEvent(new Event('focus'));window.dispatchEvent(new Event('focus'))")
+        self.assertEqual(self.page.evaluate('notificationFetches'),1)
+        self.page.evaluate("pendingNotificationRequest.callback({message:{pending_count:0,notifications:[]}});pendingNotificationRequest.always()")
+        self.assertEqual(self.page.evaluate('notificationFetches'),1)
+        self.page.evaluate("frappe.c4style.refresh_notifications();notificationHandlers.doc_update[0]();notificationHandlers.doc_update[0]();pendingNotificationRequest.callback({message:{pending_count:0,notifications:[]}});pendingNotificationRequest.always()")
+        self.assertEqual(self.page.evaluate('notificationFetches'),3)
+
+    def test_notification_sound_switch_persists_and_mutes_all_popups(self):
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
+        self.page.locator('[data-c4style-tools]').click()
+        switch=self.page.get_by_role('switch',name='Notification sound')
+        self.assertEqual(switch.get_attribute('aria-checked'),'true')
+        switch.click()
+        self.assertEqual(switch.get_attribute('aria-checked'),'false')
+        self.assertFalse(self.page.evaluate('frappe.c4style.get_personal().notificationSound'))
+        self.page.evaluate("notificationSummary={pending_count:1,notifications:[{name:'muted',subject:'Pending'}]};notificationHandlers.notification[0]()")
+        self.assertTrue(self.page.locator('.c4style-notification-toast').is_visible())
+        self.assertEqual(self.page.evaluate('bellOscillators'),0)
+        self.assertEqual(self.page.get_by_role('button',name='Enable bell sound').count(),0)
+        self.page.get_by_role('button',name='Dismiss',exact=True).click()
+        self.page.evaluate("notificationHandlers.c4style_workflow_owner_update[0]({doctype:'Order',document_name:'ONE',subject:'Approved'})")
+        self.assertEqual(self.page.evaluate('bellOscillators'),0)
+        self.page.get_by_role('button',name='Dismiss',exact=True).click()
+        switch.click()
+        self.assertEqual(switch.get_attribute('aria-checked'),'true')
+        self.page.wait_for_function('bellOscillators===2')
+        self.page.get_by_role('button',name='Close',exact=True).click()
+        self.page.locator('[data-c4style-tools]').click()
+        self.assertEqual(self.page.get_by_role('switch',name='Notification sound').get_attribute('aria-checked'),'true')
+
+    def test_notification_sound_preference_survives_page_reload(self):
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
+        self.page.locator('[data-c4style-tools]').click()
+        self.page.get_by_role('switch',name='Notification sound').click()
+        self.page.reload()
+        self.load_fixture_assets()
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
+        self.page.locator('[data-c4style-tools]').click()
+        self.assertEqual(self.page.get_by_role('switch',name='Notification sound').get_attribute('aria-checked'),'false')
+        self.page.evaluate("notificationSummary={pending_count:1,notifications:[{name:'quiet',subject:'Pending'}]};notificationHandlers.notification[0]()")
+        self.assertEqual(self.page.evaluate('bellOscillators'),0)
+
+    def test_failed_sound_preference_save_restores_switch(self):
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
+        self.page.locator('[data-c4style-tools]').click()
+        self.page.evaluate("()=>{frappe.call=options=>{options.error();options.always()}}")
+        switch=self.page.get_by_role('switch',name='Notification sound')
+        switch.click()
+        self.assertEqual(switch.get_attribute('aria-checked'),'true')
+        self.assertIsNot(self.page.evaluate('frappe.c4style.get_personal().notificationSound'),False)
+
     def test_owner_update_popup_does_not_change_pending_badge(self):
         self.load_notification_fixture({'pending_count':0,'notifications':[]})
         self.page.evaluate("notificationHandlers.c4style_workflow_owner_update[0]({doctype:'Order',document_name:'ONE',subject:'Approved'})")

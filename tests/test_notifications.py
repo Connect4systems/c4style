@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import types
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 fake=types.ModuleType('frappe')
 fake.whitelist=lambda **kwargs: lambda fn: fn
@@ -29,11 +29,16 @@ else:sys.modules['frappe']=previous
 class NotificationTests(unittest.TestCase):
     def setUp(self):
         fake.session.user='user@example.com'
-        fake.db.count.reset_mock();fake.get_all.reset_mock()
+        fake.db.count.reset_mock();fake.get_all.reset_mock();fake.get_all.side_effect=None
         fake.get_all.return_value=[{'name':'note-one','subject':'<b>Reminder</b>'}]
         fake.parse_json=__import__('json').loads
         fake.get_doc=Mock(return_value=types.SimpleNamespace(for_user=fake.session.user))
         fake.delete_doc=Mock()
+        fake.get_cached_doc=Mock(side_effect=lambda *args:fake.get_doc(*args))
+        self.loader_patch=patch.object(notifications,'_load_documents',side_effect=
+            lambda doctype,candidates:[fake.get_doc(doctype,row.name) for row in candidates])
+        self.loader_patch.start()
+        self.addCleanup(self.loader_patch.stop)
     def test_guest_cannot_read_pending_workflows(self):
         fake.session.user='Guest'
         with self.assertRaises(PermissionError): notifications.get_notifications()
@@ -97,6 +102,39 @@ class NotificationTests(unittest.TestCase):
             self.assertEqual(result,{'pending_count':0,'notifications':[]})
             self.assertEqual(fake.get_list.call_args.kwargs['filters']['docstatus'],0)
         native.get_transitions.assert_not_called()
+
+    def test_batch_loader_preserves_children_and_bounds_database_reads(self):
+        self.loader_patch.stop()
+        fake.get_meta=Mock(return_value=types.SimpleNamespace(get_table_fields=lambda:[
+            types.SimpleNamespace(fieldname='items',options='Order Item')]))
+        parents=[{'name':str(i),'owner':'owner@example.com','status':'Pending','docstatus':0}
+                 for i in range(200)]
+        children=[{'name':'line-'+str(i),'parent':str(i),'qty':i,'idx':1} for i in range(200)]
+        fake.get_all=Mock(side_effect=[parents,children])
+        fake.get_doc=Mock(side_effect=lambda data:data)
+        docs=notifications._load_documents('Order',[types.SimpleNamespace(name=str(i)) for i in range(200)])
+        self.assertEqual(len(docs),200)
+        self.assertEqual(docs[15]['items'][0]['qty'],15)
+        self.assertEqual(docs[15]['items'][0]['doctype'],'Order Item')
+        self.assertEqual(fake.get_all.call_count,2)
+        self.assertEqual(fake.get_all.call_args.kwargs['filters']['parenttype'],'Order')
+        self.assertEqual(fake.get_all.call_args.kwargs['filters']['parentfield'],'items')
+        self.assertTrue(all(len(call.args)==1 for call in fake.get_doc.call_args_list))
+
+    def test_batch_loader_handles_documents_removed_after_permission_query(self):
+        self.loader_patch.stop()
+        fake.get_meta=Mock(return_value=types.SimpleNamespace(get_table_fields=lambda:[]))
+        fake.get_all=Mock(return_value=[])
+        self.assertEqual(notifications._load_documents('Order',[types.SimpleNamespace(name='gone')]),[])
+        self.assertEqual(fake.get_all.call_count,1)
+
+    def test_virtual_documents_keep_their_native_loader(self):
+        self.loader_patch.stop()
+        fake.get_meta=Mock(return_value=types.SimpleNamespace(is_virtual=True))
+        fake.get_doc=Mock(return_value='virtual document')
+        self.assertEqual(notifications._load_documents('Virtual Order',
+            [types.SimpleNamespace(name='one')]),['virtual document'])
+        fake.get_doc.assert_called_once_with('Virtual Order','one')
 
     def test_owner_popup_only_after_state_changes_and_commit(self):
         fake.get_cached_doc=Mock(return_value=types.SimpleNamespace(workflow_state_field='status'))

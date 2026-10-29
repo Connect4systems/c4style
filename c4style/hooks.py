@@ -243,3 +243,7 @@ extend_bootinfo = "c4style.settings.boot_session"
 after_migrate = "c4style.remove_workflow_notifications.execute"
 after_install = "c4style.install_palettes.execute"
 doctype_list_js = {"Notification Log": "public/js/notification_log_list.js"}
+
+# Owner updates are popup-only and never create Notification Log records.
+doc_events = {"*": {event: "c4style.notifications.notify_workflow_owner"
+                    for event in ("on_update", "on_update_after_submit", "on_cancel")}}

@@ -3,19 +3,49 @@
     const api = frappe.c4style;
     if (!api) return;
     let unreadCount = 0;
-    let initialized = false;
-    let latestCreation = '';
+    let pending = [];
+    let listDialog = null;
     let fetching = false;
     let queued = false;
     let queuedNotify = false;
     let realtime = null;
     let audio = null;
-    const known = new Set();
+    const storageKey = `c4style-pending-workflows:${frappe.session.user}`;
+    let saved = [];
+    try { saved = JSON.parse(sessionStorage.getItem(storageKey) || '[]'); } catch (error) {}
+    const known = new Set(Array.isArray(saved) ? saved : []);
 
     function openNotifications() {
         document.querySelector('.c4style-tools-dialog[open]')?.close();
-        frappe.route_options = { for_user: frappe.session.user };
-        frappe.set_route("List", "Notification Log");
+        if (!listDialog) {
+            listDialog = new frappe.ui.Dialog({title: __('Pending workflows'), size: 'large',
+                fields: [{fieldname: 'items', fieldtype: 'HTML'}]});
+        }
+        renderList();
+        listDialog.show();
+        refresh(false);
+    }
+    function renderList() {
+        if (!listDialog) return;
+        const host = listDialog.fields_dict.items.$wrapper[0];
+        host.replaceChildren();
+        if (!pending.length) {
+            const empty = document.createElement('p');
+            empty.textContent = __('No workflows require your action.'); host.appendChild(empty);
+        }
+        pending.forEach(record => {
+            const row = document.createElement('div'); row.className = 'mb-3';
+            const link = document.createElement('a');
+            link.href = frappe.utils.get_form_link(record.doctype, record.document_name);
+            link.textContent = record.subject;
+            link.addEventListener('click', event => {
+                event.preventDefault(); listDialog.hide();
+                frappe.set_route('Form', record.doctype, record.document_name);
+            });
+            const actions = document.createElement('div'); actions.className = 'text-muted';
+            actions.textContent = (record.actions || []).join(', ');
+            row.append(link, actions); host.appendChild(row);
+        });
     }
     api.open_notifications = openNotifications;
 
@@ -29,10 +59,10 @@
             const label = String(unreadCount);
             if (badge.textContent !== label) badge.textContent = label;
             badge.hidden = unreadCount === 0;
-            const base = element.matches('[data-c4style-tools]') ? __('Appearance tools') : __('My notifications');
-            const title = unreadCount ? `${base} (${unreadCount} ${__('unread')})` : base;
+            const base = element.matches('[data-c4style-tools]') ? __('Appearance tools') : __('Pending workflows');
+            const title = unreadCount ? `${base} (${unreadCount} ${__('pending')})` : base;
             element.setAttribute('aria-label', base);
-            element.setAttribute('aria-description', `${unreadCount} ${__('unread notifications')}`);
+            element.setAttribute('aria-description', `${unreadCount} ${__('pending workflows')}`);
             element.title = title;
         });
     }
@@ -58,14 +88,19 @@
             });
         } catch (error) { /* A sound failure must not interrupt notification delivery. */ }
     }
-    function popup(records) {
+    function popup(records, ownerUpdate = false) {
         document.querySelector('.c4style-notification-toast')?.remove();
         const toast = document.createElement('aside'); toast.className = 'c4style-notification-toast';
         toast.setAttribute('role', 'status'); toast.setAttribute('aria-live', 'polite');
-        const title = document.createElement('strong'); title.textContent = __('New notification');
-        const message = document.createElement('p'); message.textContent = records[0].subject || __('You have a new notification');
+        const title = document.createElement('strong'); title.textContent = ownerUpdate ? __('Workflow update') : __('Workflow action required');
+        const message = document.createElement('p'); message.textContent = records[0].subject || __('A workflow requires your action');
         const view = document.createElement('button'); view.type = 'button'; view.className = 'btn btn-primary btn-sm';
-        view.textContent = __('View notifications'); view.addEventListener('click', () => { toast.remove(); openNotifications(); });
+        view.textContent = ownerUpdate ? __('Open document') : __('View pending workflows');
+        view.addEventListener('click', () => {
+            toast.remove();
+            if (ownerUpdate) frappe.set_route('Form', records[0].doctype, records[0].document_name);
+            else openNotifications();
+        });
         const close = document.createElement('button'); close.type = 'button'; close.className = 'btn btn-default btn-sm';
         close.textContent = __('Dismiss'); close.addEventListener('click', () => toast.remove());
         const actions = document.createElement('div'); actions.className = 'c4style-notification-actions'; actions.append(view, close);
@@ -89,20 +124,15 @@
         frappe.call({ method: 'c4style.notifications.get_notifications',
             callback: response => {
                 const result = response.message;
-                if (!result || !Number.isInteger(result.unread_count) || !Array.isArray(result.notifications)) return;
+                if (!result || !Number.isInteger(result.pending_count) || !Array.isArray(result.notifications)) return;
                 const records = result.notifications.filter(record => record && typeof record.name === 'string');
-                const fresh = records.filter(record => !known.has(record.name)
-                    && (!record.creation || !latestCreation || record.creation >= latestCreation));
-                unreadCount = Math.max(0, result.unread_count); syncBadge();
+                const fresh = records.filter(record => !known.has(record.name));
+                unreadCount = Math.max(0, result.pending_count);
+                pending = records; syncBadge(); renderList();
                 const enabled = frappe.boot?.notification_settings?.enabled;
-                if (initialized && notify && fresh.length && enabled !== false && enabled !== 0) popup(fresh);
-                records.forEach(record => known.add(record.name));
-                records.forEach(record => {
-                    if (typeof record.creation === 'string' && record.creation > latestCreation) latestCreation = record.creation;
-                });
-                // Bound memory for long-running Desk tabs while retaining recent deduplication.
-                while (known.size > 1000) known.delete(known.values().next().value);
-                initialized = true;
+                if (notify && fresh.length && enabled !== false && enabled !== 0) popup(fresh);
+                known.clear(); records.forEach(record => known.add(record.name));
+                try { sessionStorage.setItem(storageKey, JSON.stringify([...known])); } catch (error) {}
             },
             error: () => {},
             always: () => {
@@ -115,35 +145,23 @@
         if (!frappe.realtime?.on || !frappe.realtime.socket || realtime === frappe.realtime.socket) return;
         realtime = frappe.realtime.socket;
         frappe.realtime.on('notification', () => refresh(true));
+        frappe.realtime.on('doc_update', () => refresh(true));
+        frappe.realtime.on('c4style_workflow_owner_update', record => {
+            const enabled = frappe.boot?.notification_settings?.enabled;
+            if (record?.doctype && record?.document_name && enabled !== false && enabled !== 0) popup([record], true);
+            refresh(true);
+        });
         frappe.realtime.on('indicator_hide', () => refresh(false));
     }
     api.refresh_notifications = () => refresh(false);
-    // Reading a log through its form must update the stored read flag, too.
-    frappe.ui.form.on('Notification Log', {
-        refresh(frm) {
-            if (frm.doc.for_user !== frappe.session.user || Number(frm.doc.read) !== 0 || frm.__c4style_marking_read) return;
-            frm.__c4style_marking_read = true;
-            frappe.call({
-                method: 'frappe.desk.doctype.notification_log.notification_log.mark_as_read',
-                args: { docname: frm.doc.name },
-                callback: response => {
-                    if (response.exc) return;
-                    frm.doc.read = 1;
-                    frm.refresh_field('read');
-                    refresh();
-                },
-                always: () => { frm.__c4style_marking_read = false; },
-            });
-        },
-    });
     function start() {
-        installRealtime(); refresh(); syncBadge();
+        installRealtime(); refresh(true); syncBadge();
         if (window.jQuery) {
             window.jQuery(document).on('app_ready.c4styleNotifications', () => { installRealtime(); refresh(); });
             window.jQuery(document).on('ajaxComplete.c4styleNotifications', (event, xhr, settings) => {
                 const method = `${settings.url || ''} ${typeof settings.data === 'string' ? settings.data : settings.data?.cmd || ''}`;
                 if (xhr.status >= 200 && xhr.status < 300 && !xhr.responseJSON?.exc
-                    && /notification_log\.(mark_as_read|mark_all_as_read)/.test(method)) refresh();
+                    && /(apply_workflow|frappe\.desk\.form\.(save|run_method))/.test(method)) refresh();
             });
         }
         document.addEventListener('pointerdown', unlockAudio, { passive: true });

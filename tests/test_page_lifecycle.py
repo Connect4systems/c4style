@@ -81,6 +81,16 @@ class MenuTests(unittest.TestCase):
 
     def load_notification_fixture(self, initial, ready=True):
         self.page.evaluate('''initial=>{
+            frappe.utils ||= {};
+            frappe.utils.get_form_link=(dt,name)=>'/app/'+dt+'/'+name;
+            frappe.ui.Dialog=class {
+                constructor(){
+                    this.host=document.createElement('div');this.host.id='pending-workflows';
+                    this.fields_dict={items:{$wrapper:[this.host]}};
+                }
+                show(){document.body.appendChild(this.host);}
+                hide(){this.host.remove();}
+            };
             window.notificationSummary=initial;
             window.notificationHandlers={};window.bellOscillators=0;
             frappe.realtime={socket:{},on:(name,callback)=>{
@@ -123,40 +133,38 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('frappe.c4style.get_theme().announcementFontSize'), 22)
 
     def test_notification_badge_and_link_use_the_signed_in_user(self):
-        self.load_notification_fixture({'unread_count':7,'notifications':[{'name':'old','subject':'Existing'}]})
+        self.load_notification_fixture({'pending_count':7,'notifications':[{'name':'old','subject':'Existing'}]})
         self.assertEqual(self.page.locator('[data-c4style-tools] .c4style-notification-count').inner_text(),'7')
-        self.assertEqual(self.page.locator('.c4style-notification-toast').count(),0)
+        self.page.get_by_role('button',name='Dismiss').click()
         self.page.locator('[data-c4style-tools]').click()
         link=self.page.locator('[data-c4style-notifications-link]')
-        self.assertIn('normal%40example.com',link.get_attribute('href'))
+        self.assertEqual(link.get_attribute('href'),'#')
         self.assertEqual(link.locator('.c4style-notification-count').inner_text(),'7')
         link.click()
-        self.assertEqual(self.page.evaluate('route'),['List','Notification Log'])
-        self.assertEqual(self.page.evaluate('frappe.route_options'),{'for_user':'normal@example.com'})
+        self.assertTrue(self.page.locator('#pending-workflows').is_visible())
 
-    def test_open_notification_marks_read_and_recounts_remaining_unread(self):
-        self.load_notification_fixture({'unread_count':103,'notifications':[]})
-        badge = self.page.locator('[data-c4style-tools] .c4style-notification-count')
-        self.assertEqual(badge.inner_text(), '103')
-        self.page.evaluate('''()=>{
-            const summaryCall=frappe.call;
-            frappe.call=options=>{
-                if(!options.method.endsWith('.mark_as_read')) return summaryCall(options);
-                window.readRequest=options.args;
-                notificationSummary={unread_count:102,notifications:[]};
-                options.callback({});options.always();
-            };
-            window.readForm={doc:{name:'own-alert',for_user:frappe.session.user,read:0},refresh_field:()=>{}};
-            formEvents.refresh(readForm);
-        }''')
-        self.assertEqual(self.page.evaluate('readRequest.docname'), 'own-alert')
-        self.assertEqual(self.page.evaluate('readForm.doc.read'), 1)
-        self.assertEqual(badge.inner_text(), '102')
-        self.page.evaluate('''()=>{
-            window.readRequest=null;
-            formEvents.refresh({doc:{name:'other',for_user:'other@example.com',read:0}});
-        }''')
-        self.assertIsNone(self.page.evaluate('readRequest'))
+    def test_completed_workflows_refresh_badge(self):
+        self.load_notification_fixture({'pending_count':1,'notifications':[]})
+        self.page.evaluate("notificationSummary={pending_count:0,notifications:[]};frappe.c4style.refresh_notifications()")
+        self.assertFalse(self.page.locator('[data-c4style-tools] .c4style-notification-count').is_visible())
+
+    def test_pending_list_opens_document_and_keeps_count_until_action(self):
+        self.load_notification_fixture({'pending_count':1,'notifications':[
+            {'name':'Order-ONE-Pending','doctype':'Order','document_name':'ONE',
+             'subject':'Order ONE: Pending','actions':['Approve']}]})
+        self.page.get_by_role('button',name='View pending workflows').click()
+        self.assertIn('Approve',self.page.locator('#pending-workflows').inner_text())
+        self.page.locator('#pending-workflows a').click()
+        self.assertEqual(self.page.evaluate('route'),['Form','Order','ONE'])
+        self.assertEqual(self.page.locator('[data-c4style-tools] .c4style-notification-count').inner_text(),'1')
+
+    def test_owner_update_popup_does_not_change_pending_badge(self):
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
+        self.page.evaluate("notificationHandlers.c4style_workflow_owner_update[0]({doctype:'Order',document_name:'ONE',subject:'Approved'})")
+        self.assertTrue(self.page.locator('.c4style-notification-toast').is_visible())
+        self.assertFalse(self.page.locator('[data-c4style-tools] .c4style-notification-count').is_visible())
+        self.page.get_by_role('button',name='Open document').click()
+        self.assertEqual(self.page.evaluate('route'),['Form','Order','ONE'])
 
     def test_notification_rows_style_unread_and_read_after_render(self):
         self.page.evaluate('''()=>{
@@ -187,7 +195,7 @@ class MenuTests(unittest.TestCase):
             window.jqueryHandlers={};
             window.jQuery=()=>({on:(name,callback)=>{jqueryHandlers[name]=callback;}});
         }''')
-        self.load_notification_fixture({'unread_count':0,'notifications':[]},ready=False)
+        self.load_notification_fixture({'pending_count':0,'notifications':[]},ready=False)
         self.assertEqual(self.page.evaluate('notificationHandlers.notification?.length || 0'),0)
         self.page.evaluate('''()=>{
             frappe.realtime.socket={};
@@ -197,10 +205,10 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('notificationHandlers.notification.length'),1)
 
     def test_new_notification_popups_ring_once_and_clear_badge_after_read(self):
-        self.load_notification_fixture({'unread_count':0,'notifications':[]})
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
         self.page.locator('main').click()
         self.page.evaluate('''()=>{
-            notificationSummary={unread_count:1,notifications:[{name:'new',subject:'<img src=x> New alert'}]};
+            notificationSummary={pending_count:1,notifications:[{name:'new',subject:'<img src=x> New alert'}]};
             notificationHandlers.notification[0]();
         }''')
         popup=self.page.locator('.c4style-notification-toast')
@@ -211,67 +219,62 @@ class MenuTests(unittest.TestCase):
         self.page.evaluate('notificationHandlers.notification[0]()')
         self.assertEqual(self.page.locator('.c4style-notification-toast').count(),0)
         self.assertEqual(self.page.evaluate('bellOscillators'),2)
-        self.page.evaluate('''()=>{notificationSummary={unread_count:0,notifications:[]};notificationHandlers.indicator_hide[0]();}''')
+        self.page.evaluate('''()=>{notificationSummary={pending_count:0,notifications:[]};notificationHandlers.indicator_hide[0]();}''')
         self.assertFalse(self.page.locator('[data-c4style-tools] .c4style-notification-count').is_visible())
 
     def test_notification_before_first_interaction_offers_sound_unlock(self):
-        self.load_notification_fixture({'unread_count':0,'notifications':[]})
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
         self.page.evaluate('''()=>{
-            notificationSummary={unread_count:1,notifications:[{name:'new',subject:'New alert'}]};
+            notificationSummary={pending_count:1,notifications:[{name:'new',subject:'New alert'}]};
             notificationHandlers.notification[0]();
         }''')
         self.assertEqual(self.page.evaluate('bellOscillators'),0)
         self.page.get_by_role('button',name='Enable bell sound').click()
         self.assertEqual(self.page.evaluate('bellOscillators'),2)
-        self.page.get_by_role('button',name='View notifications').click()
-        self.assertEqual(self.page.evaluate('route'),['List','Notification Log'])
+        self.page.get_by_role('button',name='View pending workflows').click()
+        self.assertTrue(self.page.locator('#pending-workflows').is_visible())
 
-    def test_older_unread_items_revealed_by_reading_newer_items_do_not_alert(self):
-        self.load_notification_fixture({'unread_count':30,'notifications':[
-            {'name':'recent','subject':'Recent','creation':'2026-10-23 12:00:00'}]})
-        self.page.evaluate('''()=>{
-            notificationSummary={unread_count:10,notifications:[
-                {name:'older',subject:'Older unread item',creation:'2026-10-22 12:00:00'}]};
-            notificationHandlers.notification[0]();
-        }''')
-        self.assertEqual(self.page.locator('.c4style-notification-toast').count(),0)
+    def test_old_document_newly_requiring_action_shows_popup(self):
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
+        self.page.evaluate("notificationSummary={pending_count:1,notifications:[{name:'older',subject:'Requires approval',creation:'2020-01-01'}]};notificationHandlers.notification[0]()")
+        self.assertTrue(self.page.locator('.c4style-notification-toast').is_visible())
 
     def test_disabled_native_notifications_do_not_popup_or_ring(self):
-        self.load_notification_fixture({'unread_count':0,'notifications':[]})
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
         self.page.locator('main').click()
         self.page.evaluate('''()=>{
             frappe.boot.notification_settings={enabled:0};
-            notificationSummary={unread_count:1,notifications:[{name:'new',subject:'New alert'}]};
+            notificationSummary={pending_count:1,notifications:[{name:'new',subject:'New alert'}]};
             notificationHandlers.notification[0]();
         }''')
         self.assertEqual(self.page.evaluate('bellOscillators'),0)
         self.assertEqual(self.page.locator('.c4style-notification-toast').count(),0)
 
-    def test_notification_count_refreshes_after_native_mark_all_read(self):
+    def test_notification_count_refreshes_after_workflow_action(self):
         self.page.evaluate('''()=>{
             window.jqueryHandlers={};
             window.jQuery=()=>({on:(name,callback)=>{jqueryHandlers[name]=callback;}});
         }''')
-        self.load_notification_fixture({'unread_count':3,'notifications':[{'name':'old','subject':'Existing'}]})
+        self.load_notification_fixture({'pending_count':3,'notifications':[{'name':'old','subject':'Existing'}]})
         self.page.evaluate('''()=>{
-            notificationSummary={unread_count:0,notifications:[]};
+            notificationSummary={pending_count:0,notifications:[]};
             jqueryHandlers['ajaxComplete.c4styleNotifications']({}, {status:200},
-                {url:'/api/method/frappe.desk.doctype.notification_log.notification_log.mark_all_as_read'});
+                {url:'/api/method/frappe.model.workflow.apply_workflow'});
         }''')
         self.assertFalse(self.page.locator('[data-c4style-tools] .c4style-notification-count').is_visible())
 
     def test_notification_popup_is_visible_above_appearance_dialog_and_can_navigate(self):
-        self.load_notification_fixture({'unread_count':0,'notifications':[]})
+        self.load_notification_fixture({'pending_count':0,'notifications':[]})
         self.page.locator('[data-c4style-tools]').click()
         self.page.evaluate('''()=>{
-            notificationSummary={unread_count:1,notifications:[{name:'new',subject:'While tools are open'}]};
+            notificationSummary={pending_count:1,notifications:[{name:'new',subject:'While tools are open'}]};
             notificationHandlers.notification[0]();
         }''')
         popup=self.page.locator('.c4style-notification-toast')
         self.assertTrue(popup.evaluate('el=>{const b=el.getBoundingClientRect();return el.contains(document.elementFromPoint(b.x+20,b.y+20));}'))
-        popup.get_by_role('button',name='View notifications').click()
+        popup.get_by_role('button',name='View pending workflows').click()
         self.assertEqual(self.page.get_by_role('dialog').count(),0)
-        self.assertEqual(self.page.evaluate('route'),['List','Notification Log'])
+        self.assertTrue(self.page.locator('#pending-workflows').is_visible())
 
     def test_menu_collapses_to_icons_and_preserves_links(self):
         self.page.get_by_role('button', name='Narrow menu', exact=True).click()

@@ -14,7 +14,10 @@ class WorkflowRemovalTests(unittest.TestCase):
     def test_no_approval_overrides_or_workflow_scripts_remain(self):
         hooks = runpy.run_path(str(ROOT / 'c4style/hooks.py'))
         self.assertNotIn('override_whitelisted_methods', hooks)
-        self.assertNotIn('doc_events', hooks)
+        self.assertEqual(set(hooks['doc_events']['*']),
+                         {'on_update', 'on_update_after_submit', 'on_cancel'})
+        self.assertTrue(all(handler == 'c4style.notifications.notify_workflow_owner'
+                            for handler in hooks['doc_events']['*'].values()))
         self.assertNotIn('doctype_js', hooks)
         self.assertEqual(hooks['after_install'], 'c4style.install_palettes.execute')
         self.assertEqual(hooks['after_migrate'], 'c4style.remove_workflow_notifications.execute')

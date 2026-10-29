@@ -224,8 +224,8 @@
             const actions = document.createElement("div"); actions.className = "c4style-tools-actions";
             actions.append(button("Apps and workspaces", openLauncher), button("My sticky notes", openNotes));
             const notifications = document.createElement("a"); notifications.className = "btn btn-default";
-            notifications.href = "/app/notification-log?for_user=" + encodeURIComponent(frappe.session.user);
-            notifications.textContent = __("My notifications"); notifications.dataset.c4styleNotificationsLink = "true";
+            notifications.href = "#";
+            notifications.textContent = __("Pending workflows"); notifications.dataset.c4styleNotificationsLink = "true";
             notifications.addEventListener("click", event => {
                 if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
                 event.preventDefault(); element.close();

@@ -24,6 +24,10 @@ def delete_notifications(names):
     return {'deleted': len(names)}
 
 
+def _is_draft_state(state):
+    return str(state or '').strip().casefold() == 'draft'
+
+
 @frappe.whitelist()
 def get_notifications():
     """Live actionable documents; never infer eligibility from notification logs."""
@@ -37,18 +41,23 @@ def get_notifications():
     seen = set()
     for row in frappe.get_all('Workflow', filters={'is_active': 1}, fields=['name']):
         workflow = frappe.get_doc('Workflow', row.name)
-        states = list({t.state for t in workflow.transitions if t.allowed in roles})
+        # A workflow can require approval while docstatus is still 0. Exclude
+        # the Draft workflow state, rather than all unsubmitted documents.
+        states = list({t.state for t in workflow.transitions
+                       if t.allowed in roles and not _is_draft_state(t.state)})
         if not states or not frappe.has_permission(workflow.document_type, "read"):
             continue
         start = 0
         while True:
             # get_list applies the current user's document and user permissions.
             candidates = frappe.get_list(workflow.document_type,
-                filters={workflow.workflow_state_field: ['in', states], 'docstatus': ['<', 2]},
+                filters={workflow.workflow_state_field: ['in', states], 'docstatus': 0},
                 fields=['name'], order_by='modified desc, name desc',
                 limit_start=start, limit_page_length=200)
             for candidate in candidates:
                 doc = frappe.get_doc(workflow.document_type, candidate.name)
+                if doc.docstatus != 0 or _is_draft_state(doc.get(workflow.workflow_state_field)):
+                    continue
                 transitions = [t for t in get_transitions(doc, workflow)
                                if has_approval_access(user, doc, t)]
                 key = (doc.doctype, doc.name)

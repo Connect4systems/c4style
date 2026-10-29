@@ -1,0 +1,43 @@
+{
+  "local_assets_overridden": false,
+  "checks": [
+    {
+      "name": "badge equals distinct live actionable documents",
+      "passed": true,
+      "detail": {
+        "count": 356,
+        "unique": 356,
+        "badge": 356,
+        "draft": 54
+      }
+    },
+    {
+      "name": "deployed startup fix and popup deduplication",
+      "passed": true,
+      "detail": "Deployed startup popup works; no repeat on refresh or reload"
+    },
+    {
+      "name": "pending list and document navigation",
+      "passed": true,
+      "detail": {
+        "rows": 356,
+        "route": [
+          "Form",
+          "Quotation",
+          "SAL-QTN-2026-00107-1"
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "count": 356,
+    "unique": 356,
+    "badge": 356,
+    "draft": 54
+  },
+  "browser_errors": [],
+  "draft_exclusion_deployed": false,
+  "limitations": [
+    "No business documents changed; server owner event delivery not exercised."
+  ]
+}

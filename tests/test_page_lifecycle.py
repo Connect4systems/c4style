@@ -158,6 +158,14 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('route'),['Form','Order','ONE'])
         self.assertEqual(self.page.locator('[data-c4style-tools] .c4style-notification-count').inner_text(),'1')
 
+    def test_notification_startup_waits_for_authenticated_user(self):
+        self.page.evaluate("window.jqueryHandlers={};window.jQuery=()=>({on:(name,callback)=>{jqueryHandlers[name]=callback;}});frappe.session.user=undefined")
+        self.load_notification_fixture({'pending_count':1,'notifications':[{'name':'late','subject':'Needs approval'}]})
+        self.page.evaluate("frappe.session.user='normal@example.com';jqueryHandlers['app_ready.c4styleNotifications']()")
+        self.assertTrue(self.page.locator('.c4style-notification-toast').is_visible())
+        self.assertEqual(self.page.evaluate("JSON.parse(sessionStorage.getItem('c4style-pending-workflows:normal@example.com'))"),['late'])
+        self.assertIsNone(self.page.evaluate("sessionStorage.getItem('c4style-pending-workflows:undefined')"))
+
     def test_owner_update_popup_does_not_change_pending_badge(self):
         self.load_notification_fixture({'pending_count':0,'notifications':[]})
         self.page.evaluate("notificationHandlers.c4style_workflow_owner_update[0]({doctype:'Order',document_name:'ONE',subject:'Approved'})")

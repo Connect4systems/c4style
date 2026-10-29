@@ -10,10 +10,17 @@
     let queuedNotify = false;
     let realtime = null;
     let audio = null;
-    const storageKey = `c4style-pending-workflows:${frappe.session.user}`;
-    let saved = [];
-    try { saved = JSON.parse(sessionStorage.getItem(storageKey) || '[]'); } catch (error) {}
-    const known = new Set(Array.isArray(saved) ? saved : []);
+    let storageKey = null;
+    const known = new Set();
+    function loadKnown() {
+        const key = `c4style-pending-workflows:${frappe.session.user}`;
+        if (storageKey === key) return;
+        storageKey = key; known.clear();
+        try {
+            const saved = JSON.parse(sessionStorage.getItem(key) || '[]');
+            if (Array.isArray(saved)) saved.forEach(name => known.add(name));
+        } catch (error) {}
+    }
 
     function openNotifications() {
         document.querySelector('.c4style-tools-dialog[open]')?.close();
@@ -119,6 +126,7 @@
     }
     function refresh(notify = false) {
         if (!frappe.session?.user || frappe.session.user === 'Guest') return;
+        loadKnown();
         if (fetching) { queued = true; queuedNotify = queuedNotify || notify; return; }
         fetching = true;
         frappe.call({ method: 'c4style.notifications.get_notifications',
@@ -157,7 +165,7 @@
     function start() {
         installRealtime(); refresh(true); syncBadge();
         if (window.jQuery) {
-            window.jQuery(document).on('app_ready.c4styleNotifications', () => { installRealtime(); refresh(); });
+            window.jQuery(document).on('app_ready.c4styleNotifications', () => { installRealtime(); refresh(true); });
             window.jQuery(document).on('ajaxComplete.c4styleNotifications', (event, xhr, settings) => {
                 const method = `${settings.url || ''} ${typeof settings.data === 'string' ? settings.data : settings.data?.cmd || ''}`;
                 if (xhr.status >= 200 && xhr.status < 300 && !xhr.responseJSON?.exc
